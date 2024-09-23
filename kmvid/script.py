@@ -1,0 +1,70 @@
+import kmvid.data.effect
+import kmvid.data.project
+import kmvid.data.resource
+import kmvid.data.text
+
+import PIL.ImageColor
+
+def _add_attr(obj, attr, value):
+    if attr in obj.__dict__:
+        raise Exception(f"Attribute {attr} already exists in object {obj}")
+    obj.__dict__[attr] = value
+
+def project(**kwargs):
+    p = kmvid.data.project.Project(**kwargs)
+
+    def add(*clips):
+        for clp in clips:
+            p.add_clip(clp)
+        return p
+    _add_attr(p, 'add', add)
+
+    return p
+
+def clip(file_or_color, **kwargs):
+    clip_kws, res_kws = kmvid.data.clip.Clip.split_kwargs(kwargs)
+
+    res = None
+
+    try:
+        if isinstance(file_or_color, str):
+            color = PIL.ImageColor.getrgb(file_or_color)
+            res = kmvid.data.resource.ColorResource(color = color, **res_kws)
+        else:
+            res = kmvid.data.resource.ColorResource(color = file_or_color, **res_kws)
+    except ValueError:
+        res = kmvid.data.resource.from_file(file_or_color, **res_kws)
+
+    clip = kmvid.data.clip.Clip(res, **clip_kws)
+
+    def add(*items):
+        for itm in items:
+            clip.add_item(itm)
+        return clip
+    _add_attr(clip, 'add', add)
+
+    return clip
+
+def pos(**kwargs):
+    absolute, relative = kmvid.data.effect.Pos.split_kwargs(kwargs)
+
+    if len(relative) > 0:
+        relative = kmvid.data.effect.RelativePos(**relative)
+    else:
+        relative = None
+
+    if len(absolute) > 0:
+        absolute = kmvid.data.effect.Pos(**absolute)
+    else:
+        absolute = None
+
+    if relative and absolute:
+        return kmvid.data.effect.EffectSeq(effects=[relative, absolute])
+    return relative or absolute or kmvid.data.effect.Pos()
+
+resize = kmvid.data.effect.Resize
+rotate = kmvid.data.effect.Rotate
+alpha = kmvid.data.effect.Alpha
+crop = kmvid.data.effect.Crop
+draw = kmvid.data.effect.Draw
+border = kmvid.data.effect.Border

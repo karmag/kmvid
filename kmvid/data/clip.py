@@ -1,0 +1,107 @@
+import kmvid.data.common as common
+import kmvid.data.effect as effect
+import kmvid.data.variable as variable
+import kmvid.data.resource as resource
+import kmvid.data.state as state
+
+def color(width=100, height=100, color=(0, 0, 0), mode="RGB"):
+    return Clip(resource.ColorResource(width, height, color, mode))
+
+def image(path, mode="RGB"):
+    return Clip(resource.ImageResource(path, mode))
+
+def video(path):
+    return Clip(resource.VideoResource(path))
+
+@variable.holder
+class Clip(common.Node, variable.VariableHold):
+    start_time = variable.VariableConfig(float, 0)
+    duration = variable.VariableConfig(float)
+    crop_start = variable.VariableConfig(float, 0)
+
+    def __init__(self, resource, **kwargs):
+        common.Node.__init__(self)
+        variable.VariableHold.__init__(self, kwargs=kwargs)
+
+        self.resource = resource
+        self.items = []
+
+    def _get_duration(self):
+        value = self.resource.get_info().duration
+
+        for item in self.items:
+            if isinstance(item, Clip):
+                duration = item.duration
+                if duration is not None:
+                    start = item.start_time
+                    value = max(value or 0, start + duration)
+
+        return value
+
+    def add_item(self, item):
+        if isinstance(item, (Clip, effect.Effect)):
+            self.items.append(item)
+            item.parent = self
+        else:
+            raise Exception("Unknown argument type %s" % str(type(item)))
+
+    def get_frame(self):
+        return self._get_frame_internal(None)
+
+    def _get_frame_internal(self, parent_image):
+        image = self.resource.get_frame(state.time + self.crop_start)
+
+        with state.Render(parent_image, image) as render:
+            for item in self.items:
+
+                if isinstance(item, effect.Effect):
+                    item.apply(render)
+
+                elif isinstance(item, Clip):
+                    start_time = item.start_time
+                    duration = item.duration
+
+                    if (start_time <= state.time and
+                        (duration is None or
+                         state.time < start_time + duration)):
+                        sub_data = item._get_frame_internal(image)
+                        if sub_data is not None:
+                            image.paste(
+                                sub_data.image,
+                                (int(sub_data.x), int(sub_data.y)),
+                                (sub_data.image
+                                 if sub_data.image.has_transparency_data
+                                 else None))
+
+                else:
+                    raise Exception("Unknown item to render: %s" % str(item))
+
+        return render
+
+    def to_simple(self):
+        s = common.Simple(self)
+        s.merge_super(common.Node, self)
+        s.merge_super(variable.VariableHold, self)
+        s.set('resource', self.resource.to_simple())
+        s.set('items', [item.to_simple() for item in self.items])
+        return s
+
+    @staticmethod
+    def from_simple(s, obj=None):
+        if obj is None:
+            obj = Clip(None)
+        common.Node.from_simple(s, obj)
+        variable.VariableHold.from_simple(s, obj)
+
+        obj.resource = resource.Resource.from_simple(s.get_simple('resource'))
+        obj.items = []
+        for item in s.get('items', []):
+            item_simple = common.Simple.from_data(s, item)
+            if item.get('_type') == 'Clip':
+                obj.items.append(Clip.from_simple(item_simple))
+            elif  item.get('_type') == 'Effect':
+                obj.items.append(effect.Effect.from_simple(item_simple))
+            else:
+                raise Exception(f"Unknown clip item type: {s.get('_type')}")
+
+        return obj
