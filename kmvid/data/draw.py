@@ -85,16 +85,20 @@ class Draw(common.Node, variable.VariableHold):
         self.add_instruction(Config(**kwargs))
         return self
 
-    def rectangle(self, **kwargs):
-        self.add_instruction(Rectangle(**kwargs))
+    def rectangle(self, *args, **kwargs):
+        self.add_instruction(Rectangle(*args, **kwargs))
         return self
 
-    def ellipse(self, **kwargs):
-        self.add_instruction(Ellipse(**kwargs))
+    def ellipse(self, *args, **kwargs):
+        self.add_instruction(Ellipse(*args, **kwargs))
         return self
 
     def text(self, *args, **kwargs):
         self.add_instruction(Text(*args, **kwargs))
+        return self
+
+    def line(self, *args, **kwargs):
+        self.add_instruction(Line(*args, **kwargs))
         return self
 
     def to_simple(self):
@@ -161,7 +165,7 @@ class Instruction(common.Node, variable.VariableHold):
 class Config(Instruction):
     color = variable.VariableConfig()
     fill = variable.VariableConfig()
-    pen_width = variable.VariableConfig(int)
+    pen_width = variable.VariableConfig(int, default=0)
 
     font_name = variable.VariableConfig(str)
     font_size = variable.VariableConfig(int)
@@ -170,14 +174,37 @@ class Config(Instruction):
     def __init__(self, **kwargs):
         Instruction.__init__(self, kwargs=kwargs)
 
-    def apply(self, data):
-        data.color = self.color
-        data.fill = self.fill
-        data.pen_width = self.pen_width or 0
+        self._is_set = set(kwargs.keys())
 
-        data.font_name = self.font_name or data.font_name
-        data.font_size = self.font_size or data.font_size
-        data.font_variant = self.font_variant or data.font_variant
+    def apply(self, data):
+        if 'color' in self._is_set:
+            data.color = self.color
+        if 'fill' in self._is_set:
+            data.fill = self.fill
+        if 'pen_width' in self._is_set:
+            data.pen_width = self.pen_width
+
+        if 'font_name' in self._is_set:
+            data.font_name = self.font_name
+        if 'font_size' in self._is_set:
+            data.font_size = self.font_size
+        if 'font_variant' in self._is_set:
+            data.font_variant = self.font_variant
+
+    def to_simple(self):
+        s = common.Simple(self)
+        s.merge_super(Instruction, self)
+        s.set('is_set', self._is_set)
+        return s
+
+    @staticmethod
+    def from_simple(s, obj=None):
+        if obj is None:
+            obj = Config()
+
+        Instruction.from_simple(s, obj)
+        obj._is_set = s.get('is_set', set())
+        return obj
 
 @variable.holder
 class Rectangle(Instruction):
@@ -187,8 +214,8 @@ class Rectangle(Instruction):
     height = variable.VariableConfig(int)
     center = variable.VariableConfig(bool)
 
-    def __init__(self, **kwargs):
-        Instruction.__init__(self, kwargs=kwargs)
+    def __init__(self, *args, **kwargs):
+        Instruction.__init__(self, args=args, kwargs=kwargs)
 
     def apply(self, data):
         x = self.x
@@ -212,8 +239,8 @@ class Ellipse(Instruction):
     radius = variable.VariableConfig(float)
     center = variable.VariableConfig(bool)
 
-    def __init__(self, **kwargs):
-        Instruction.__init__(self, kwargs=kwargs)
+    def __init__(self, *args, **kwargs):
+        Instruction.__init__(self, args=args, kwargs=kwargs)
 
     def apply(self, data):
         x = self.x
@@ -311,3 +338,33 @@ class Text(Instruction):
                        stroke_width = data.pen_width,
                        stroke_fill = data.color,
                        anchor = self.anchor)
+
+@variable.holder
+class Line(Instruction):
+    path = variable.VariableConfig()
+    close = variable.VariableConfig(bool, False)
+
+    def __init__(self, *args, **kwargs):
+        """Draw lines or a polygon.
+
+        path -- A list of (x, y) pairs indicating.
+
+        close -- When true an additional line from the last point to
+        the first point will be drawn. This turns the lines into a
+        polygon which can be filled.
+
+        """
+        Instruction.__init__(self, args=args, kwargs=kwargs)
+
+    def apply(self, data):
+        path = self.path
+
+        if self.close:
+            data.draw.polygon(path,
+                              fill = data.fill,
+                              outline = data.color,
+                              width = data.pen_width)
+        else:
+            data.draw.line(path,
+                           fill = data.color,
+                           width = data.pen_width)

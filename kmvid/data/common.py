@@ -43,10 +43,10 @@ def _clean_simple_data(x):
         return result
 
     elif isinstance(x, (list, tuple)):
-        result = []
-        for y in x:
-            result.append(_clean_simple_data(y))
-        return result
+        return [_clean_simple_data(y) for y in x]
+
+    elif isinstance(x, set):
+        return set([_clean_simple_data(y) for y in x])
 
     elif isinstance(x, Simple):
         return x.data

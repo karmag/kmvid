@@ -361,16 +361,20 @@ class Draw(Effect):
         self.draw.config(**kwargs)
         return self
 
-    def rectangle(self, **kwargs):
-        self.draw.rectangle(**kwargs)
+    def rectangle(self, *args, **kwargs):
+        self.draw.rectangle(*args, **kwargs)
         return self
 
-    def ellipse(self, **kwargs):
-        self.draw.ellipse(**kwargs)
+    def ellipse(self, *args, **kwargs):
+        self.draw.ellipse(*args, **kwargs)
         return self
 
     def text(self, *args, **kwargs):
         self.draw.text(*args, **kwargs)
+        return self
+
+    def line(self, *args, **kwargs):
+        self.draw.line(*args, **kwargs)
         return self
 
     def apply(self, render):
