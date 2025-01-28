@@ -97,6 +97,10 @@ class FontCache:
 
             print()
 
+if font_cache is None:
+    font_cache = FontCache()
+    font_cache.register_path("c:\\windows\\fonts")
+
 class FontData:
     def __init__(self, font):
         self.name = font.getname()[0]
@@ -121,9 +125,6 @@ class FontData:
 
     def get_variants(self):
         return self.font_by_variant.keys()
-
-font_cache = FontCache()
-font_cache.register_path("c:\\windows\\fonts")
 
 def get_font(name, size=16, variant="Regular"):
     """Returns a font according to the given specifications. The name

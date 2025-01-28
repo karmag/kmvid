@@ -9,3 +9,4 @@ __pycache__
 bin
 docs/*
 test-errors
+example_*.mp4

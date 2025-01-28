@@ -19,13 +19,13 @@ class Project(common.Node, variable.VariableHold):
     filename = variable.VariableConfig(str, "output.mp4")
     duration = variable.VariableConfig(float, None)
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         common.Node.__init__(self)
-        variable.VariableHold.__init__(self, kwargs=kwargs)
+        variable.VariableHold.__init__(self, args=args, kwargs=kwargs)
 
         self.root_clip = clip.color(width = self.width,
                                     height = self.height,
-                                    color = (120, 120, 240))
+                                    color = (0, 0, 0))
 
     def _get_duration(self):
         value = self.root_clip.duration

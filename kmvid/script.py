@@ -10,8 +10,8 @@ def _add_attr(obj, attr, value):
         raise Exception(f"Attribute {attr} already exists in object {obj}")
     obj.__dict__[attr] = value
 
-def project(**kwargs):
-    p = kmvid.data.project.Project(**kwargs)
+def Project(*args, **kwargs):
+    p = kmvid.data.project.Project(*args, **kwargs)
 
     def add(*clips):
         for clp in clips:
@@ -21,7 +21,7 @@ def project(**kwargs):
 
     return p
 
-def clip(file_or_color, **kwargs):
+def Clip(file_or_color, **kwargs):
     clip_kws, res_kws = kmvid.data.clip.Clip.split_kwargs(kwargs)
 
     res = None
@@ -45,7 +45,7 @@ def clip(file_or_color, **kwargs):
 
     return clip
 
-def pos(**kwargs):
+def Pos(**kwargs):
     absolute, relative = kmvid.data.effect.Pos.split_kwargs(kwargs)
 
     if len(relative) > 0:
@@ -62,9 +62,9 @@ def pos(**kwargs):
         return kmvid.data.effect.EffectSeq(effects=[relative, absolute])
     return relative or absolute or kmvid.data.effect.Pos()
 
-resize = kmvid.data.effect.Resize
-rotate = kmvid.data.effect.Rotate
-alpha = kmvid.data.effect.Alpha
-crop = kmvid.data.effect.Crop
-draw = kmvid.data.effect.Draw
-border = kmvid.data.effect.Border
+Resize = kmvid.data.effect.Resize
+Rotate = kmvid.data.effect.Rotate
+Alpha = kmvid.data.effect.Alpha
+Crop = kmvid.data.effect.Crop
+Draw = kmvid.data.effect.Draw
+Border = kmvid.data.effect.Border

@@ -473,6 +473,7 @@ class Border(Effect):
 
             common.merge_alpha_layer(
                 bg,
+                # TODO need to account for the extra size of the border or the corners look wonky
                 self._get_alpha_channel(bg))
 
             bg.paste(render.image, (width, width), render.image)
