@@ -26,6 +26,7 @@ class Project(common.Node, variable.VariableHold):
         self.root_clip = clip.color(width = self.width,
                                     height = self.height,
                                     color = (0, 0, 0))
+        self.root_clip.parent = self
 
     def _get_duration(self):
         value = self.root_clip.duration

@@ -1,7 +1,10 @@
 import PIL.Image
-import subprocess
 import json
+import logging
 import os
+import subprocess
+
+logger = logging.getLogger(__name__)
 
 _FFMPEG_PATH = "bin/ffmpeg.exe"
 _FFPROBE_PATH = "bin/ffprobe.exe"
@@ -288,21 +291,24 @@ class Ffprobe:
         ]
 
         result = subprocess.run(cmd, capture_output = True, text = True)
-        data = json.loads(result.stdout)
+        if result is None or result.stdout is None:
+            logger.debug("ffprobe failed for: %s" % self.filename)
+        else:
+            data = json.loads(result.stdout)
 
-        for stream in data['streams']:
-            if stream['codec_type'] == 'video':
-                self.width = int(stream['width'])
-                self.height = int(stream['height'])
-                self.size = (self.width, self.height)
+            for stream in data['streams']:
+                if stream['codec_type'] == 'video':
+                    self.width = int(stream['width'])
+                    self.height = int(stream['height'])
+                    self.size = (self.width, self.height)
 
-                n, d = stream['r_frame_rate'].split('/')
-                self.fps_exact = (int(n), int(d))
-                self.fps = self.fps_exact[0] / self.fps_exact[1]
+                    n, d = stream['r_frame_rate'].split('/')
+                    self.fps_exact = (int(n), int(d))
+                    self.fps = self.fps_exact[0] / self.fps_exact[1]
 
-                break
+                    break
 
-        self.duration = float(data['format']['duration'])
+            self.duration = float(data['format']['duration'])
 
 class FrameInfo:
     def __init__(self):

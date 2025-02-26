@@ -185,7 +185,7 @@ class Resize(Effect):
     height = variable.VariableConfig(int)
     strategy = variable.VariableConfig(ResizeType, ResizeType.FIT)
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         """Resizes the clip. The clip is repositioned so that the center of
         the clip is the same before and after the resize. Either width
         of height may be omitted.
@@ -214,7 +214,7 @@ class Resize(Effect):
             fit inside the given dimensions.
 
         """
-        Effect.__init__(self, kwargs=kwargs)
+        Effect.__init__(self, args=args, kwargs=kwargs)
 
     def apply(self, render):
         img_w = render.image.size[0]

@@ -4,10 +4,10 @@ import kmvid.data.variable as variable
 import kmvid.data.resource as resource
 import kmvid.data.state as state
 
-def color(width=100, height=100, color=(0, 0, 0), mode="RGB"):
+def color(width=100, height=100, color=(0, 0, 0), mode=None):
     return Clip(resource.ColorResource(width, height, color, mode))
 
-def image(path, mode="RGB"):
+def image(path, mode=None):
     return Clip(resource.ImageResource(path, mode))
 
 def video(path):

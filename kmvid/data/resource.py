@@ -8,12 +8,12 @@ import sys
 import PIL.Image
 
 IMAGE_FORMATS = set([
-    ".blp", ".bmp", ".cur", ".dcx", ".dds", ".dib", ".emf", ".eps",
-    ".fits", ".flc", ".fli", ".fpx", ".ftex", ".gbr", ".gd", ".gif",
-    ".icns", ".ico", ".im", ".imt", ".jpeg", ".jpg", ".mcidas", ".mic",
-    ".mpo", ".msp", ".pcd", ".pcx", ".pfm", ".pixar", ".png", ".ppm",
-    ".psd", ".qoi", ".sgi", ".spider", ".sun", ".tga", ".tiff", ".wal",
-    ".webp", ".wmf", ".xbm", ".xpm",
+    "blp", "bmp", "cur", "dcx", "dds", "dib", "emf", "eps",
+    "fits", "flc", "fli", "fpx", "ftex", "gbr", "gd", "gif",
+    "icns", "ico", "im", "imt", "jpeg", "jpg", "mcidas", "mic",
+    "mpo", "msp", "pcd", "pcx", "pfm", "pixar", "png", "ppm",
+    "psd", "qoi", "sgi", "spider", "sun", "tga", "tiff", "wal",
+    "webp", "wmf", "xbm", "xpm",
 ])
 
 VIDEO_FORMATS = set(ffmpeg.get_video_formats().keys())
@@ -24,13 +24,13 @@ def is_recognized_format(path):
 
     """
     _, ext = os.path.splitext(path)
-    ext = ext.lower()
+    ext = ext.lower()[1:]
     return ext in IMAGE_FORMATS or ext in VIDEO_FORMATS
 
 def from_file(path, **kwargs):
     """Creates a resource from the given file path."""
     _, ext = os.path.splitext(path)
-    ext = ext.lower()
+    ext = ext.lower()[1:]
     if ext in IMAGE_FORMATS:
         return ImageResource(path=path, **kwargs)
     elif ext in VIDEO_FORMATS:
@@ -56,7 +56,8 @@ class Resource(common.Simpleable):
         raise NotImplementedError()
 
     def _heartbeat(self):
-        state.resource_manager.report_heartbeat(self)
+        if state.resource_manager is not None:
+            state.resource_manager.report_heartbeat(self)
 
     @staticmethod
     def from_simple(s, obj=None):
@@ -67,7 +68,7 @@ class Resource(common.Simpleable):
         return obj
 
 class ColorResource(Resource):
-    def __init__(self, width=100, height=100, color=(255, 255, 255), mode="RGB"):
+    def __init__(self, width=100, height=100, color=(255, 255, 255), mode=None):
         Resource.__init__(self)
         self.width = width
         self.height = height
@@ -81,11 +82,23 @@ class ColorResource(Resource):
         info.height = self.height
         return info
 
+    def _get_mode_from_color(self):
+        color = self.color
+        if isinstance(self.color, str):
+            color = PIL.ImageColor.getrgb(self.color)
+        if len(color) == 3:
+            return "RGB"
+        elif len(color) == 4:
+            return "RGBA"
+        else:
+            raise ValueError("Unknown color format: %s", str(self.color))
+
     def get_frame(self, time):
         if self.image is None:
-            self.image = PIL.Image.new(mode = self.mode,
-                                       size = (int(self.width), int(self.height)),
-                                       color = self.color)
+            self.image = PIL.Image.new(
+                mode = self.mode or self._get_mode_from_color(),
+                size = (int(self.width), int(self.height)),
+                color = self.color)
 
         self._heartbeat()
         return self.image.copy()
@@ -112,7 +125,7 @@ class ColorResource(Resource):
         return obj
 
 class ImageResource(Resource):
-    def __init__(self, path, mode="RGB"):
+    def __init__(self, path, mode=None):
         Resource.__init__(self)
         self.path = path
         self.mode = mode
@@ -136,7 +149,7 @@ class ImageResource(Resource):
     def get_frame(self, time):
         if self.image is None:
             with PIL.Image.open(self.path) as img:
-                self.image = img.convert(self.mode)
+                self.image = img if self.mode is None else img.convert(self.mode)
 
         self._heartbeat()
         return self.image.copy()
