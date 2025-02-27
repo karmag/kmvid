@@ -1,6 +1,7 @@
 import kmvid.data.common as common
 import kmvid.data.expression as expression
 import kmvid.data.state as state
+import scipy.interpolate as interpolate
 
 import enum
 import sys
@@ -142,15 +143,7 @@ class VariableConfig(common.Simpleable):
         force = None
         if type and issubclass(type, enum.Enum):
             def force(value):
-                if value is None or isinstance(value, type):
-                    return value
-                value_str = str(value).lower()
-                for entry in type:
-                    if entry.name.lower() == value_str or entry.value == value:
-                        return entry
-                raise ValueError(
-                    "Unable to interpret '%s' as enum of type %s" % (
-                        str(value), type.__name__))
+                return value if value is None else common.to_enum(value, type)
 
         elif type in (int, float, str):
             def force(value):
@@ -191,6 +184,9 @@ class Variable(common.Node):
             return
 
         for vv in _to_variable_values(value, self.config.value_transform_fn):
+            if vv.start_time is None:
+                vv.start_time = 0
+
             remove = []
             for old_vv in self._values:
                 if vv.start_time == old_vv.start_time:
@@ -281,16 +277,36 @@ def _to_variable_values(value, value_transform_fn=None):
             value = value_transform_fn(value)
         return [StaticValue(value)]
 
+def make_val(value, *args):
+    kwargs = {}
+
+    for x in args:
+        if isinstance(x, (str, TimeValueType)):
+            kwargs['time_type'] = common.to_enum(x, TimeValueType)
+
+        elif isinstance(x (int, float)):
+            kwargs['time'] = x
+
+    varval = None
+    if isinstance(value, expression.Expression):
+        varval = ExpressionValue(value, **kwargs)
+    else:
+        varval = StaticValue(value, **kwargs)
+
+    return varval
+
 class TimeValueType(enum.Enum):
     NONE = 0
     LINEAR = 1
     CURVE = 2
+    BOUNDED_CURVE = 3
+    LOOSE_CURVE = 4
 
 class VariableValue(common.Node):
-    def __init__(self):
+    def __init__(self, time=None, time_type=None):
         common.Node.__init__(self)
-        self.start_time = 0
-        self.time_type = TimeValueType.LINEAR
+        self.start_time = time
+        self.time_type = time_type or TimeValueType.LINEAR
 
     def get_value(self):
         raise NotImplementedError()
@@ -314,8 +330,8 @@ class VariableValue(common.Node):
             return obj
 
 class StaticValue(VariableValue):
-    def __init__(self, value):
-        VariableValue.__init__(self)
+    def __init__(self, value, **kwargs):
+        VariableValue.__init__(self, **kwargs)
         self.value = value
 
     def get_value(self):
@@ -336,8 +352,8 @@ class StaticValue(VariableValue):
         return obj
 
 class ExpressionValue(VariableValue):
-    def __init__(self, expression):
-        VariableValue.__init__(self)
+    def __init__(self, expression, **kwargs):
+        VariableValue.__init__(self, **kwargs)
         self.expression = expression
 
     def get_value(self):
@@ -377,7 +393,9 @@ def _get_value(var, time=0):
     elif tt == TimeValueType.LINEAR:
         return _get_linear_value(values, index, time)
 
-    elif tt == TimeValueType.CURVE:
+    elif (tt == TimeValueType.CURVE or
+          tt == TimeValueType.BOUNDED_CURVE or
+          tt == TimeValueType.LOOSE_CURVE):
         return _get_curve_value(values, index, time)
 
     else:
@@ -413,74 +431,26 @@ def _get_linear_value(values, index, time):
     return start_value + change * factor
 
 def _get_curve_value(values, index, time):
-    ratio = _get_ratio(values, index, time)
-    _, handle, _ = _get_all_handles(values, index, ratio)
-    _, value = handle.at_ratio(ratio)
-    return value
+    if index == len(values) - 1:
+        return values[index].get_value()
 
-def _get_ratio(values, index, time):
-    start = values[index]
-    if time == start.start_time:
-        return 0
+    xs = []
+    ys = []
+    for varval in values:
+        xs.append(varval.start_time)
+        # TODO getting value like this wont work for dynamic values;
+        # time used will be current time
+        ys.append(varval.get_value())
+
+    varval = values[index]
+
+    if varval.time_type == TimeValueType.CURVE:
+        ip = interpolate.Akima1DInterpolator(xs, ys)
+    elif varval.time_type == TimeValueType.BOUNDED_CURVE:
+        ip = interpolate.PchipInterpolator(xs, ys)
+    elif varval.time_type == TimeValueType.LOOSE_CURVE:
+        ip = interpolate.CubicSpline(xs, ys)
     else:
-        right = values[index + 1]
-        return (time - start.start_time) / (right.start_time - start.start_time)
+        raise ValueError("Unknown TimeValueType for curve function: %s" % str(varval.time_type))
 
-def _get_all_handles(values, index, ratio):
-    """Returns (left, current, right) handles."""
-    left_handle = _get_handle(values, index, right_hand_side=True)
-    right_handle = _get_handle(values, index + 1, right_hand_side=False)
-    handle = common.Vector(origin = left_handle.at_ratio(ratio),
-                           target = right_handle.at_ratio(ratio))
-
-    return left_handle, handle, right_handle
-
-def _get_handle(values, index, right_hand_side=True):
-    start = values[index]
-    handle = None
-
-    length_factor = 0.5
-
-    # first entry
-    if index == 0:
-        right = values[index + 1]
-        handle = common.Vector(origin = (start.start_time, start.get_value()),
-                               target = (right.start_time, right.get_value()))
-        handle.magnitude = _get_varval_distance(start, right) * length_factor
-        handle.move_to(start.start_time, start.get_value())
-
-    # middle entry (has left and right varval)
-    elif index + 1 < len(values):
-        left = values[index - 1]
-        right = values[index + 1]
-
-        handle = common.Vector(origin = (left.start_time, left.get_value()),
-                               target = (right.start_time, right.get_value()))
-        handle.move_to(start.start_time, start.get_value())
-        if right_hand_side:
-            handle.magnitude = _get_varval_distance(start, right) * length_factor
-        else:
-            handle.magnitude = _get_varval_distance(left, start) * length_factor
-            handle.invert().swap()
-
-    # last entry
-    else:
-        left = values[index - 1]
-        if right_hand_side:
-            handle = common.Vector(origin = (left.start_time, left.get_value()),
-                                   target = (start.start_time, start.get_value()))
-            handle.magnitude = _get_varval_distance(left, start) * length_factor
-        else:
-            handle = common.Vector()
-            handle.delta_x = 1
-            handle.magnitude = _get_varval_distance(left, start) * length_factor
-        handle.move_to(start.start_time, start.get_value())
-
-    return handle
-
-def _get_varval_distance(a, b):
-    v = common.Vector(origin = (a.start_time, a.get_value()),
-                      target = (b.start_time, b.get_value()))
-    return v.magnitude
-
-#adjust length of handles, should be a portion of the distance to the neighboring varval
+    return ip(time)

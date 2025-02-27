@@ -17,6 +17,25 @@ def is_implemented(cls, method_name):
         cls = type(cls)
     return cls.__dict__.get(method_name, None) is not None
 
+def to_enum(value, enum_type):
+    """Converts the value to an enum of the given type. If the value is
+    already of type it is returned as is. String and integers are
+    treated as name and ordinal respectively.
+
+    If no conversion can be performed a ValueError is raised.
+
+    """
+    if isinstance(value, enum_type):
+        return value
+
+    value_str = str(value).lower()
+    for entry in enum_type:
+        if entry.name.lower() == value_str or entry.value == value:
+            return entry
+
+    raise ValueError("Unable to interpret '%s' as enum of type %s" % (
+        str(value), type.__name__))
+
 #--------------------------------------------------
 # simple
 

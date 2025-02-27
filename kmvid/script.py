@@ -1,4 +1,5 @@
 import kmvid.data.effect
+import kmvid.data.variable
 import kmvid.data.project
 import kmvid.data.resource
 import kmvid.data.text
@@ -9,6 +10,8 @@ def _add_attr(obj, attr, value):
     if attr in obj.__dict__:
         raise Exception(f"Attribute {attr} already exists in object {obj}")
     obj.__dict__[attr] = value
+
+Val = kmvid.data.variable.make_val
 
 def Project(*args, **kwargs):
     p = kmvid.data.project.Project(*args, **kwargs)
