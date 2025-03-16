@@ -13,11 +13,27 @@ import PIL.Image
 
 @variable.holder
 class Project(common.Node, variable.VariableHold):
-    width = variable.VariableConfig(int, 800)
-    height = variable.VariableConfig(int, 600)
-    fps = variable.VariableConfig(float, 30)
-    filename = variable.VariableConfig(str, "output.mp4")
-    duration = variable.VariableConfig(float, None)
+    """Project is the base for rendering. It contains convenience
+    functions for generating video and images.
+
+    """
+
+    width = variable.VariableConfig(
+        int, 800, doc="""Width of rendered video.""")
+    height = variable.VariableConfig(
+        int, 600, doc="""Height of rendered video.""")
+    fps = variable.VariableConfig(
+        float, 30, doc="""Frames per second to use when rendering video.""")
+    filename = variable.VariableConfig(
+        str, "output.mp4", doc="""Path to use when rendering video.""")
+    duration = variable.VariableConfig(
+        float, None,
+        doc="""Target duration of the rendered video.
+
+        If not set duration is derived from clips added to the
+        project. If duration is not set and not able to be derived
+        some rendering functions will fail."""
+    )
 
     def __init__(self, *args, **kwargs):
         common.Node.__init__(self)

@@ -132,6 +132,7 @@ class VariableConfig(common.Simpleable):
     def __init__(self,
                  type=None,
                  default=None,
+                 doc=None,
                  value_transform_fn=None):
         global __VARIABLE_CONFIG_INDEX_COUNTER__
         __VARIABLE_CONFIG_INDEX_COUNTER__ += 1
@@ -139,6 +140,7 @@ class VariableConfig(common.Simpleable):
         self.name = None
         self.type = type
         self.default = default
+        self.doc = doc
 
         force = None
         if type and issubclass(type, enum.Enum):

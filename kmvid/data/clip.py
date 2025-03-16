@@ -15,9 +15,22 @@ def video(path):
 
 @variable.holder
 class Clip(common.Node, variable.VariableHold):
-    start_time = variable.VariableConfig(float, 0)
-    duration = variable.VariableConfig(float)
-    crop_start = variable.VariableConfig(float, 0)
+    """Clips contains effects and other clips.
+
+    Each effect and clip are rendered in the same order that they are
+    added. Sub-clips are truncated by the boundries of this clip.
+
+    """
+
+    start_time = variable.VariableConfig(
+        float, 0, doc="""How far into the parent clip this clip starts.""")
+    duration = variable.VariableConfig(
+        float, doc="""Duration of the clip.
+
+        If the clip is using a finite resource (such as a video) the
+        duration will not be longer than the resource allows.""")
+    crop_start = variable.VariableConfig(
+        float, 0, doc="""Time to crop from start of the clip.""")
 
     def __init__(self, resource, **kwargs):
         common.Node.__init__(self)
