@@ -73,84 +73,49 @@ class EffectSeq(Effect):
 
 @variable.holder
 class Pos(Effect):
-    x = variable.VariableConfig(int)
-    y = variable.VariableConfig(int)
-    x_offset = variable.VariableConfig(int, 0)
-    y_offset = variable.VariableConfig(int, 0)
-    center = variable.VariableConfig(bool, False)
+    """Changes the position of a clip in relation to its parent.
+
+    There are multiple variables relating to positioning along the
+    same axis. Relative positioning is applied first. Second absolute
+    positioning, which will override relative positioning. Offset is
+    applied last.
+
+    """
+
+    x = variable.VariableConfig(
+        int, doc="""Absolute x position.""")
+    y = variable.VariableConfig(
+        int, doc="""Absolute y position.""")
+    center = variable.VariableConfig(
+        bool, False, doc="""For use with x and y variables.
+
+        When True the center of the clip is aligned with x and y
+        rather than the upper left corner.""")
+
+    x_offset = variable.VariableConfig(
+        int, 0, doc="""Offset for x position.""")
+    y_offset = variable.VariableConfig(
+        int, 0, doc="""Offset for y position.""")
+
+    horizontal = variable.VariableConfig(
+        float, doc="""Relative horizontal position.
+
+        0 aligns the clip to the left of the parent, 1 aligns it to
+        the right.""")
+    vertical = variable.VariableConfig(
+        float, doc="""Relative vertical position.
+
+        0 aligns the clip to the top of the parent, 1 aligns it to the
+        bottom.""")
+    weight = variable.VariableConfig(
+        float, 1, doc="""For use with horizontal and vertical variables.
+
+        How much of the clip is visible in the parent when horizontal
+        and vertical are at 0 or 1. Weight 1 means that the clip is
+        contained fully within the parent. Weight 0 means that the
+        clip is right outside the parent.""")
 
     def __init__(self, *args, **kwargs):
-        """Adjust the position of the clip. Absolute x and y position is
-        applied first, followed by offset values.
-
-        x, y -- Absolute positioning. Sets the position in relation to
-        the parent clip. Overrides any previous position.
-
-        x_offset, y_offset -- Relative positioning. Modifies the
-        current position.
-
-        center -- When true align the center of the clip with x and y
-        rather than the upper left corner.
-
-        """
-        Effect.__init__(self, args=args, kwargs=kwargs)
-
-    def apply(self, render):
-        if self.x is not None:
-            render.x = self.x
-            if self.center:
-                render.x -= render.image.size[0] // 2
-
-        if self.y is not None:
-            render.y = self.y
-            if self.center:
-                render.y -= render.image.size[1] // 2
-
-        render.x += self.x_offset
-        render.y += self.y_offset
-
-@variable.holder
-class RelativePos(Effect):
-    horizontal = variable.VariableConfig(float)
-    vertical = variable.VariableConfig(float)
-    weight = variable.VariableConfig(float, 1)
-
-    def __init__(self, *args, **kwargs):
-        """Position the clip relative to the parent. Horizontal and vertical
-        controls relative positioning and goes from 0 to 1. Weight
-        controls how much of the clip is in frame at the edges.
-
-        Examples:
-
-            horizontal=0, weight=1; Left edge of the clip is aligned
-            with left edge of the parent. (Clip is fully in frame.)
-
-            horizontal=1, weight=1; Right edge of the clip is aligned
-            with right edge of the parent. (Clip is fully in frame.)
-
-            horizontal=0, weight=0; Right edge of the clip is aligned
-            with left edge of the parent. (Clip is out of frame.)
-
-            horizontal=0.5, vertical=0.5; The clip is centered in the
-            parent.
-
-            horizontal=1, vertical=1; The clip is in the bottom right
-            corner of the parent.
-
-        horizontal -- Goes from 0 to 1. 0 aligns the clip to the left
-        of the parent, 1 aligns it to the right. Setting to None
-        indicates that there should be no adjustment to the position.
-
-        vertical -- Goes from 0 to 1. 0 aligns the clip to the top of
-        the parent, 1 aligns it to the bottom. Setting to None
-        indicates that there should be no adjustment to the position.
-
-        weight -- How much of the clip is visible in the parent when
-        horizontal and vertical are at 0 or 1. Weight 1 means that the
-        clip is always contained fully within the parent. Weight 0
-        means that the clip is right outside the parent.
-
-        """
         Effect.__init__(self, args=args, kwargs=kwargs)
 
     def apply(self, render):
@@ -172,6 +137,19 @@ class RelativePos(Effect):
                 start_y = -h * weight
 
                 render.y = (start_y + (total_height - h) * self.vertical)
+
+        if self.x is not None:
+            render.x = self.x
+            if self.center:
+                render.x -= render.image.size[0] // 2
+
+        if self.y is not None:
+            render.y = self.y
+            if self.center:
+                render.y -= render.image.size[1] // 2
+
+        render.x += self.x_offset
+        render.y += self.y_offset
 
 class ResizeType(enum.Enum):
     COVER = 0

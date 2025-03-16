@@ -48,23 +48,7 @@ def Clip(file_or_color, **kwargs):
 
     return clip
 
-def Pos(**kwargs):
-    absolute, relative = kmvid.data.effect.Pos.split_kwargs(kwargs)
-
-    if len(relative) > 0:
-        relative = kmvid.data.effect.RelativePos(**relative)
-    else:
-        relative = None
-
-    if len(absolute) > 0:
-        absolute = kmvid.data.effect.Pos(**absolute)
-    else:
-        absolute = None
-
-    if relative and absolute:
-        return kmvid.data.effect.EffectSeq(effects=[relative, absolute])
-    return relative or absolute or kmvid.data.effect.Pos()
-
+Pos = kmvid.data.effect.Pos
 Resize = kmvid.data.effect.Resize
 Rotate = kmvid.data.effect.Rotate
 Alpha = kmvid.data.effect.Alpha

@@ -24,7 +24,6 @@ class TestSimple(unittest.TestCase):
 
             effect.EffectSeq(effects = [effect.Pos(), effect.Resize()]),
             effect.Pos(),
-            effect.RelativePos(),
             effect.Resize(),
             effect.Rotate(),
             effect.Alpha(),

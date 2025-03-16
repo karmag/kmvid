@@ -47,31 +47,31 @@ class TestEffect(testbase.Testbase):
 
     def test_relative_pos(self):
         self.check(clip.color(width=2, height=1, color=G),
-                   effect.RelativePos(0, 0),
+                   effect.Pos(horizontal=0, vertical=0),
                    ['oo----',
                     '------',
                     '------'])
 
         self.check(clip.color(width=2, height=1, color=G),
-                   effect.RelativePos(horizontal=0.5, vertical=0.5),
+                   effect.Pos(horizontal=0.5, vertical=0.5),
                    ['------',
                     '--oo--',
                     '------'])
 
         self.check(clip.color(width=2, height=1, color=G),
-                   effect.RelativePos(horizontal=1, vertical=1),
+                   effect.Pos(horizontal=1, vertical=1),
                    ['------',
                     '------',
                     '----oo'])
 
         self.check(clip.color(width=2, height=2, color=G),
-                   effect.RelativePos(0, 0, weight=0.5),
+                   effect.Pos(horizontal=0, vertical=0, weight=0.5),
                    ['o-----',
                     '------',
                     '------'])
 
         self.check(clip.color(width=2, height=1, color=G),
-                   effect.RelativePos(vertical=0, weight=0),
+                   effect.Pos(vertical=0, weight=0),
                    ['------',
                     '------',
                     '------'])
@@ -131,7 +131,8 @@ class TestEffect(testbase.Testbase):
     def test_rotate(self):
         self.check(clip.color(width=3, height=2, color=G),
                    effect.EffectSeq(effects=[effect.Rotate(90),
-                                             effect.RelativePos(0.5, 0.5)]),
+                                             effect.Pos(horizontal=0.5,
+                                                        vertical=0.5)]),
                    ['--oo--',
                     '--oo--',
                     '--oo--'])
