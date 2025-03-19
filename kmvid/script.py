@@ -51,7 +51,7 @@ def Clip(file_or_color, **kwargs):
 Pos = kmvid.data.effect.Pos
 Resize = kmvid.data.effect.Resize
 Rotate = kmvid.data.effect.Rotate
-Alpha = kmvid.data.effect.Alpha
+Fade = kmvid.data.effect.Fade
 Crop = kmvid.data.effect.Crop
 Draw = kmvid.data.effect.Draw
 Border = kmvid.data.effect.Border

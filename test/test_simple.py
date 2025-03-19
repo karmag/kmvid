@@ -26,7 +26,7 @@ class TestSimple(unittest.TestCase):
             effect.Pos(),
             effect.Resize(),
             effect.Rotate(),
-            effect.Alpha(),
+            effect.Fade(),
             effect.Crop(),
             effect.Draw(),
             effect.Border(all={'size': 10, 'width': 20, 'height': 30}),

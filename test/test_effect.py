@@ -162,6 +162,36 @@ class TestEffect(testbase.Testbase):
 
         self.assertImage("mixed", c)
 
+    def test_fade(self):
+        size = 50
+        c = clip.color(width=size * 10,
+                       height=size * 3,
+                       color=(0, 0, 0))
+
+        for i in range(10):
+            tile = clip.color(width=size, height=size, color=(255, 0, 0))
+            tile.add_item(effect.Fade(fade_in=10))
+            tile.add_item(effect.Pos(x=i*size))
+            tile.crop_start = i
+            tile.duration = 10
+            c.add_item(tile)
+
+        for i in range(10):
+            tile = clip.color(width=size, height=size, color=(0, 255, 0))
+            tile.add_item(effect.Fade(fade_out=10))
+            tile.add_item(effect.Pos(x=i*size, y=size))
+            tile.crop_start = i
+            tile.duration = 10
+            c.add_item(tile)
+
+        for i in range(10):
+            tile = clip.color(width=size, height=size, color=(0, 0, 255))
+            tile.add_item(effect.Fade(value=(i+1)/10))
+            tile.add_item(effect.Pos(x=i*size, y=2*size))
+            c.add_item(tile)
+
+        self.assertImage("fade", c)
+
     def check(self, clp, eff, expected_image):
         base = clip.color(width=6, height=3, color=B)
         base.add_item(clp)

@@ -204,10 +204,47 @@ class Render:
 #--------------------------------------------------
 # util
 
-def merge_alpha_layer(image, alpha_channel):
+class AlphaStrategyType(enum.Enum):
+    MIN = 0
+    MAX = 1
+    OVERWRITE = 2
+
+def merge_alpha(image, alpha, strategy=AlphaStrategyType.MIN):
+    """Merge image with the given alpha value. Returns the image.
+
+    image --
+
+    alpha -- If an image use the its alpha channel as the alpha layer.
+    If a float treat it as an alpha value and construct a uniform
+    image from that value.
+
+    strategy --
+
+    """
+
+    if isinstance(alpha, (int, float)):
+        alpha = PIL.Image.new(mode = "L",
+                              size = image.size,
+                              color = min(255, max(0, int(alpha * 255))))
+    else:
+        if not alpha.mode == "L":
+            alpha = alpha.getchannel("A")
+
     if image.has_transparency_data:
-        alpha_channel = PIL.ImageChops.darker(image.getchannel("A"), alpha_channel)
-    image.putalpha(alpha_channel)
+        if strategy == AlphaStrategyType.MIN:
+            alpha = PIL.ImageChops.darker(image.getchannel("A"), alpha)
+
+        elif strategy == AlphaStrategyType.MAX:
+            alpha = PIL.ImageChops.lighter(image.getchannel("A"), alpha)
+
+        elif strategy == AlphaStrategyType.OVERWRITE:
+            pass
+
+        else:
+            raise ValueError("Unknown alpha strategy: %s" % str(strategy))
+
+    image.putalpha(alpha)
+    return image
 
 class Vector:
     """2 dimensional vector going from origin -> target.

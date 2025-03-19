@@ -251,55 +251,48 @@ class Rotate(Effect):
         render.y += int((old[1] - new[1]) / 2)
 
 @variable.holder
-class Alpha(Effect):
-    value = variable.VariableConfig(float)
-    fade_in = variable.VariableConfig(float)
-    fade_out = variable.VariableConfig(float)
+class Fade(Effect):
+    """Fade the clip by applying a uniform alpha value.
 
-    def __init__(self, *args, **kwargs):
-        """Adjust the alpha channel value for the clip.
+    If multiple values are set only the lowest will apply.
 
-        value -- From 0 (transparent) to 1 (opaque). If given will
-        also serve as the maximum alpha value this effect takes.
+    """
 
-        fade_in -- Duration of the fade in effect.
+    value = variable.VariableConfig(
+        float, 1, doc="""Alpha value as a float between 0 and 1.""")
+    fade_in = variable.VariableConfig(
+        float, doc="""Duration of fade transition at the start of the clip.""")
+    fade_out = variable.VariableConfig(
+        float, doc="""Duration of fade transition at the end of the clip.""")
+    alpha_strategy = variable.VariableConfig(
+        common.AlphaStrategyType, common.AlphaStrategyType.MIN)
 
-        fade_out -- Duration of the fade out effect.
-
-        """
-        Effect.__init__(self, args=args, kwargs=kwargs)
+    def __init__(self, **kwargs):
+        Effect.__init__(self, kwargs=kwargs)
 
     def apply(self, render):
         value = self.value
-        fade_in = self.fade_in
-        fade_out = self.fade_out
+        fade_in_value = 1
+        fade_out_value = 1
         time = state.local_time(self)
 
-        if value is None:
-            value = 1
+        if self.fade_in is not None and self.fade_in >= time:
+            fade_in_value = time / self.fade_in
 
-        if fade_in is None or fade_in < time:
-            fade_in = 1
-        else:
-            fade_in = time / fade_in
-
-        if fade_out is None:
-            fade_out = 1
-        else:
+        if self.fade_out is not None:
             clp = self.get_parent_node(clip.Clip)
             duration = clp.duration
-            fade_start = duration - fade_out
-            if time < fade_start:
-                fade_out = 1
-            else:
-                fade_out = 1 - (time - fade_start) / fade_out
+            if duration:
+                fade_start = duration - self.fade_out
+                if time < fade_start:
+                    fade_out_value = 1
+                else:
+                    fade_out_value = 1 - (time - fade_start) / self.fade_out
 
-        color = int(min(value, fade_in, fade_out) * 255)
-
-        if color < 255:
-            alpha_channel = PIL.Image.new(
-                mode = "L", size = render.image.size, color = color)
-            common.merge_alpha_layer(render.image, alpha_channel)
+        render.image = common.merge_alpha(
+            render.image,
+            max(0, min(1, value, fade_in_value, fade_out_value)),
+            self.alpha_strategy)
 
 @variable.holder
 class Crop(Effect):
@@ -438,7 +431,7 @@ class Border(Effect):
     def apply(self, render):
         width = int(self.width + 0.5)
 
-        common.merge_alpha_layer(
+        common.merge_alpha(
             render.image,
             self._get_alpha_channel(render.image))
 
@@ -449,7 +442,7 @@ class Border(Effect):
                       render.image.size[1] + width * 2),
                 color=self.color)
 
-            common.merge_alpha_layer(
+            common.merge_alpha(
                 bg,
                 # TODO need to account for the extra size of the border or the corners look wonky
                 self._get_alpha_channel(bg))
