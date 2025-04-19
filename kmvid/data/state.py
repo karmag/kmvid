@@ -53,12 +53,6 @@ def local_time(node, t=None):
                 if value:
                     t -= value
 
-            var = node.get_variable("crop_start")
-            if var:
-                value = var.get_value()
-                if value:
-                    t += value
-
         elif getattr(node, 'start_time', None):
             t -= node.start_time or 0
 

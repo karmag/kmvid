@@ -172,7 +172,7 @@ class TestEffect(testbase.Testbase):
             tile = clip.color(width=size, height=size, color=(255, 0, 0))
             tile.add_item(effect.Fade(fade_in=10))
             tile.add_item(effect.Pos(x=i*size))
-            tile.crop_start = i
+            tile.start_time = -i
             tile.duration = 10
             c.add_item(tile)
 
@@ -180,7 +180,7 @@ class TestEffect(testbase.Testbase):
             tile = clip.color(width=size, height=size, color=(0, 255, 0))
             tile.add_item(effect.Fade(fade_out=10))
             tile.add_item(effect.Pos(x=i*size, y=size))
-            tile.crop_start = i
+            tile.start_time = -i
             tile.duration = 10
             c.add_item(tile)
 

@@ -55,3 +55,4 @@ Fade = kmvid.data.effect.Fade
 Crop = kmvid.data.effect.Crop
 Draw = kmvid.data.effect.Draw
 Border = kmvid.data.effect.Border
+BorderCorner = kmvid.data.effect.BorderCorner
