@@ -62,7 +62,7 @@ class Clip(common.Node, variable.VariableHold):
         return self._get_frame_internal(None)
 
     def _get_frame_internal(self, parent_image):
-        image = self.resource.get_frame(state.time + self.crop_start)
+        image = self.resource.get_frame(state.local_time + self.crop_start)
 
         with state.Render(parent_image, image) as render:
             for item in self.items:
@@ -74,10 +74,15 @@ class Clip(common.Node, variable.VariableHold):
                     start_time = item.start_time
                     duration = item.duration
 
-                    if (start_time <= state.time and
+                    if (start_time <= state.local_time and
                         (duration is None or
-                         state.time < start_time + duration)):
-                        sub_data = item._get_frame_internal(image)
+                         state.local_time < start_time + duration)):
+
+                        sub_data = None
+
+                        with state.AdjustLocalTime(start_time):
+                            sub_data = item._get_frame_internal(image)
+
                         if sub_data is not None:
                             image.paste(
                                 sub_data.image,

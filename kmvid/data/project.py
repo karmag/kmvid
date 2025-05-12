@@ -56,7 +56,7 @@ class Project(common.Node, variable.VariableHold):
 
     def get_frame(self, time=0):
         with state.State():
-            state.time = time
+            state.set_time(time)
             render = self.root_clip.get_frame()
             return render.image
 
@@ -112,10 +112,10 @@ class Project(common.Node, variable.VariableHold):
                                      self.fps) as writer:
                 with ProgressTracker(self) as tracker:
                     while time < duration:
-                        state.time = time
+                        state.set_time(time)
                         render = self.root_clip.get_frame()
                         writer.write_frame(render.image)
-                        tracker.report_frame(state.time)
+                        tracker.report_frame(state.global_time)
                         time += frame_time
 
     def to_simple(self):

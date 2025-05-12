@@ -225,7 +225,7 @@ class Variable(common.Node):
             val = self._values[0].get_value()
 
         elif len(self._values) > 1:
-            val = _get_value(self, state.local_time(self))
+            val = _get_value(self, state.local_time)
 
         elif self._default is not None:
             val = self._default.get_value()

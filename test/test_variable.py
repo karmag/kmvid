@@ -40,9 +40,9 @@ class TestVariable(testbase.Testbase):
 
         with state.State():
             self.assertEqual(10, var.get_value())
-            state.time = 1
+            state.set_time(1)
             self.assertEqual(20, var.get_value())
-            state.time = 2
+            state.set_time(2)
             self.assertEqual(100, var.get_value())
 
     def test_override_old_value(self):
@@ -58,16 +58,16 @@ class TestVariable(testbase.Testbase):
 
         self.assertEqual(30, var.get_value())
         with state.State():
-            state.time = 1
+            state.set_time(1)
             self.assertEqual(20, var.get_value())
 
         # add with time
         var.add_value({1: 60, 2: 100})
         self.assertEqual(30, var.get_value())
         with state.State():
-            state.time = 1
+            state.set_time(1)
             self.assertEqual(60, var.get_value())
-            state.time = 2
+            state.set_time(2)
             self.assertEqual(100, var.get_value())
 
     def test_time_value_type(self):
@@ -81,7 +81,7 @@ class TestVariable(testbase.Testbase):
                                    (1, 10),
                                    (1.5, 55),
                                    (2, 100)]:
-                state.time = time
+                state.set_time(time)
                 self.assertEqual(expected, var.get_value())
 
         # discrete / instant
@@ -95,7 +95,7 @@ class TestVariable(testbase.Testbase):
                                    (1, 10),
                                    (1.5, 10),
                                    (2, 100)]:
-                state.time = time
+                state.set_time(time)
                 self.assertEqual(expected, var.get_value())
 
     def test_enum_values(self):

@@ -16,6 +16,6 @@ class TestExpression(testbase.Testbase):
 
     def test_time(self):
         with state.State():
-            state.time = 5
+            state.set_time(5)
             self.assertEqual(5, expression.parse('global-time').evaluate())
             self.assertEqual(5, expression.parse('time').evaluate())

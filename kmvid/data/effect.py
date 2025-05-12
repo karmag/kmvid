@@ -274,7 +274,7 @@ class Fade(Effect):
         value = self.value
         fade_in_value = 1
         fade_out_value = 1
-        time = state.local_time(self)
+        time = state.local_time
 
         if self.fade_in is not None and self.fade_in >= time:
             fade_in_value = time / self.fade_in

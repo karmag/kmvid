@@ -45,16 +45,7 @@ class SymDef:
         self.function = function
         self.takes_arg = True
 
-        try:
-            function(None)
-        except TypeError:
-            self.takes_arg = False
-        except:
-            pass
-
     def get(self, node):
-        if self.takes_arg:
-            return self.function(node)
         return self.function()
 
 __FUNCTION_MAPPING__ = {}
@@ -67,8 +58,8 @@ for fdef in [FnDef('+', operator.add,     ftype="binary"),
              ]:
     __FUNCTION_MAPPING__[fdef.name] = fdef
 
-for sdef in [SymDef('time', lambda node: state.local_time(node)),
-             SymDef('global-time', lambda: state.time),
+for sdef in [SymDef('time', lambda: state.local_time),
+             SymDef('global-time', lambda: state.global_time),
              SymDef('width', lambda: state.render.image.size[0]),
              SymDef('height', lambda: state.render.image.size[1]),
              ]:
