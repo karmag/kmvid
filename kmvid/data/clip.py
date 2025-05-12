@@ -29,8 +29,6 @@ class Clip(common.Node, variable.VariableHold):
 
         If the clip is using a finite resource (such as a video) the
         duration will not be longer than the resource allows.""")
-    crop_start = variable.VariableConfig(
-        float, 0, doc="""Time to crop from start of the clip.""")
 
     def __init__(self, resource, **kwargs):
         common.Node.__init__(self)
@@ -62,7 +60,7 @@ class Clip(common.Node, variable.VariableHold):
         return self._get_frame_internal(None)
 
     def _get_frame_internal(self, parent_image):
-        image = self.resource.get_frame(state.local_time + self.crop_start)
+        image = self.resource.get_frame(state.local_time)
 
         with state.Render(parent_image, image) as render:
             for item in self.items:
