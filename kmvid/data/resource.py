@@ -260,8 +260,7 @@ class MappingEntry(common.Simpleable):
 class TimeMap(common.Simpleable):
     def __init__(self, duration):
         self._duration = duration
-        self._mapping = [MappingEntry(0, 0),
-                         MappingEntry(duration, duration)]
+        self.clear()
 
     def _validate(self):
         errors = []
@@ -314,6 +313,12 @@ class TimeMap(common.Simpleable):
 
     def get_duration(self):
         return self._mapping[-1].in_time
+
+    def clear(self):
+        """Resets all configuration to the default state."""
+        self._mapping = [MappingEntry(0, 0),
+                         MappingEntry(self._duration,
+                                      self._duration)]
 
     def set_crop_start(self, duration):
         """Crop the start, removing the given duration.
@@ -379,6 +384,17 @@ class TimeMap(common.Simpleable):
 
             out_duration = next.out_time - this.get_end_time()
             next.in_time = this.in_time + out_duration * factor
+
+        self._validate()
+
+    def fit_into(self, duration):
+        """Adjusts the overall speed to fit everything into the given
+        duration. All segments are scaled with the same factor.
+
+        """
+        factor = duration / self.get_duration()
+        for e in self._mapping:
+            e.in_time *= factor
 
         self._validate()
 

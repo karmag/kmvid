@@ -4,6 +4,16 @@ import itertools
 import testbase
 
 class TestResource(testbase.Testbase):
+    def test_clear(self):
+        tm = resource.TimeMap(10)
+        old = tm.__repr__()
+
+        tm.set_crop_start(3)
+        tm.set_speed(4)
+        tm.clear()
+
+        self.assertEqual(old, tm.__repr__())
+
     def test_crop_start(self):
         tm = resource.TimeMap(10)
 
@@ -92,3 +102,12 @@ class TestResource(testbase.Testbase):
                 self.assertEqual(tm.get(1), 5)
                 self.assertEqual(tm.get(2), None)
                 self.assertEqual(tm.get_duration(), 1.5)
+
+    def test_fit_into(self):
+        tm = resource.TimeMap(10)
+        tm.fit_into(5)
+
+        self.assertEqual(tm.get(0), 0)
+        self.assertEqual(tm.get(2), 4)
+        self.assertEqual(tm.get(5), None)
+        self.assertEqual(tm.get_duration(), 5)
