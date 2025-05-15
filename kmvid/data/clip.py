@@ -36,9 +36,29 @@ class Clip(common.Node, variable.VariableHold):
 
         self.resource = resource
         self.items = []
+        self._time_map = None
+
+    def get_time_map(self):
+        """Returns the TimeMap object for this clip is applicable. Only
+        underlaying resources with finite durations have TimeMap
+        objects.
+
+        """
+        if self._time_map is None:
+            info = self.resource.get_info()
+            if info.duration is not None:
+                self._time_map = resource.TimeMap(info.duration)
+
+        return self._time_map
+
+    time = property(get_time_map)
 
     def _get_duration(self):
-        value = self.resource.get_info().duration
+        value = None
+        if self.get_time_map():
+            value = self.get_time_map().get_duration()
+        else:
+            value = self.resource.get_info().duration
 
         for item in self.items:
             if isinstance(item, Clip):
@@ -60,7 +80,10 @@ class Clip(common.Node, variable.VariableHold):
         return self._get_frame_internal(None)
 
     def _get_frame_internal(self, parent_image):
-        image = self.resource.get_frame(state.local_time)
+        frame_time = state.local_time
+        if self._time_map:
+            frame_time = self._time_map.get(state.local_time)
+        image = self.resource.get_frame(frame_time)
 
         with state.Render(parent_image, image) as render:
             for item in self.items:
@@ -100,6 +123,7 @@ class Clip(common.Node, variable.VariableHold):
         s.merge_super(variable.VariableHold, self)
         s.set('resource', self.resource.to_simple())
         s.set('items', [item.to_simple() for item in self.items])
+        s.set('time_map', self._time_map.to_simple() if self._time_map else None)
         return s
 
     @staticmethod
@@ -119,5 +143,8 @@ class Clip(common.Node, variable.VariableHold):
                 obj.items.append(effect.Effect.from_simple(item_simple))
             else:
                 raise Exception(f"Unknown clip item type: {s.get('_type')}")
+        obj._time_map = (resource.TimeMap.from_simple(s.get_simple('time_map'))
+                         if s.get('time_map', None)
+                         else None)
 
         return obj

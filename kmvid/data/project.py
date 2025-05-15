@@ -45,11 +45,11 @@ class Project(common.Node, variable.VariableHold):
         self.root_clip.parent = self
 
     def _get_duration(self):
-        value = self.root_clip.duration
-        if value is not None:
-            return value
-
-        return value
+        clip = self.root_clip.duration
+        user = self.get_variable('duration').get_value(external_lookup=False)
+        if clip and user:
+            return min(clip, user)
+        return clip or user
 
     def add_clip(self, clp):
         self.root_clip.add_item(clp)

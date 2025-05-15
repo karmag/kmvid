@@ -212,11 +212,15 @@ class Variable(common.Node):
             self._default = varval[0]
             self._default.parent = self
 
-    def get_value(self):
+    def get_value(self, external_lookup=True):
         """Returns the value. If value is not set the default value is used
         instead. If the default value is not set a _get_{name}
         function will be looked for in the parent node and called
         without arguments. If no function is found None is returned.
+
+        If external_lookup is False this method will not attempt to
+        find _get_{name} functions in parent objects. This is to allow
+        non-recursive calls from within those methods.
 
         """
         val = None
@@ -230,7 +234,7 @@ class Variable(common.Node):
         elif self._default is not None:
             val = self._default.get_value()
 
-        elif self.parent is not None:
+        elif self.parent is not None and external_lookup:
             f = getattr(self.parent, '_get_' + self.config.name, None)
             if f is not None:
                 val = f()

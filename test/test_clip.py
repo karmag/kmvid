@@ -5,7 +5,7 @@ import kmvid.data.state as state
 import testbase
 
 class TestClip(testbase.Testbase):
-    def test_time(self):
+    def test_start_time(self):
         root = clip.color(color=(20, 20, 20), width=150, height=150)
 
         offset = clip.color(color=(200, 200, 200), width=50, height=150)

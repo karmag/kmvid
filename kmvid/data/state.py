@@ -1,6 +1,5 @@
 import kmvid.data.common as common
 import kmvid.data.resource as resource
-import kmvid.data.variable as variable
 
 global_time = 0
 local_time = 0

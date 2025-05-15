@@ -226,3 +226,196 @@ class ResourceManager:
             r.close()
 
         self.resources = set()
+
+class MappingEntry(common.Simpleable):
+    def __init__(self, in_time, out_time, out_time_end=None):
+        self.in_time = in_time
+        self.out_time = out_time
+        self.out_time_end = out_time_end
+
+    def get_end_time(self):
+        """Returns out_time_end if set, otherwise out_time."""
+        if self.out_time_end is not None:
+            return self.out_time_end
+        return self.out_time
+
+    def to_simple(self):
+        s = common.Simple(self)
+        s.set('in_time', self.in_time)
+        s.set('out_time', self.out_time)
+        s.set('out_time_end', self.out_time_end)
+        return s
+
+    @staticmethod
+    def from_simple(s, obj=None):
+        if obj is None:
+            obj = MappingEntry(0, 0)
+
+        obj.in_time = s.get('in_time')
+        obj.out_time = s.get('out_time')
+        obj.out_time_end = s.get('out_time_end')
+
+        return obj
+
+class TimeMap(common.Simpleable):
+    def __init__(self, duration):
+        self._duration = duration
+        self._mapping = [MappingEntry(0, 0),
+                         MappingEntry(duration, duration)]
+
+    def _validate(self):
+        errors = []
+
+        if self._mapping[0].in_time != 0:
+            errors.append("First in_time must be 0")
+
+        in_times = [e.in_time for e in self._mapping]
+        if in_times != sorted(in_times):
+            errors.append("In times are out of order")
+        if len(in_times) != len(set(in_times)):
+            errors.append("Multiple identical in time values")
+
+        out_times = []
+        for e in self._mapping:
+            out_times.append(e.out_time)
+            if e.out_time_end is not None:
+                out_times.append(e.out_time_end)
+        if out_times != sorted(out_times):
+            errors.append("Out times are out of order")
+        if len(out_times) != len(set(out_times)):
+            errors.append("Multiple identical out time values")
+
+        if len(errors) > 0:
+            raise ValueError(self.__repr__() + " " + ", ".join(errors))
+
+    def _get_index(self, in_time):
+        for i, e in enumerate(self._mapping):
+            if e.in_time > in_time:
+                return i - 1
+        return None
+
+    def get(self, in_time):
+        """Returns the out_time corresponding to the given in_time."""
+        index = self._get_index(in_time)
+        if index is None:
+            return None
+
+        this = self._mapping[index]
+        next = self._mapping[index + 1]
+
+        if this.in_time == in_time:
+            return this.get_end_time()
+
+        in_time_duration = next.in_time - this.in_time
+        out_time_duration = next.out_time - this.get_end_time()
+        factor = (in_time - this.in_time) / in_time_duration
+
+        return this.get_end_time() + out_time_duration * factor
+
+    def get_duration(self):
+        return self._mapping[-1].in_time
+
+    def set_crop_start(self, duration):
+        """Crop the start, removing the given duration.
+
+        This method overrides any previous set_crop_start calls. It
+        maintains the speed of segments.
+
+        """
+        this = self._mapping[0]
+        next = self._mapping[1]
+
+        old_out_duration = next.out_time - this.get_end_time()
+
+        this.out_time = 0
+        this.out_time_end = duration
+
+        new_out_duration = next.out_time - this.get_end_time()
+
+        out_diff = new_out_duration - old_out_duration
+        out_factor = out_diff / old_out_duration
+        in_diff = next.in_time * out_factor
+
+        for e in self._mapping[1:]:
+            next.in_time += in_diff
+
+        self._validate()
+
+    def set_crop_end(self, duration):
+        """Crop the end, removing the given duration.
+
+        This method overrides any previous set_crop_end calls. It
+        maintains the speed of segments.
+
+        """
+        prev = self._mapping[-2]
+        this = self._mapping[-1]
+
+        old_in_duration = this.in_time - prev.in_time
+        old_out_duration = this.out_time - prev.get_end_time()
+
+        this.out_time = self._duration - duration
+        this.out_time_end = self._duration
+
+        new_out_duration = this.out_time - prev.get_end_time()
+        factor = new_out_duration / old_out_duration
+
+        this.in_time = prev.in_time + old_in_duration * factor
+
+        self._validate()
+
+    def set_speed(self, speed_factor):
+        """Sets the speed. This overrides any previous speed configuration.
+
+        A speed_factor of 2 means that it's running twice as fast, 0.5
+        means that it's running at half speed.
+
+        """
+        factor = 1 / speed_factor
+
+        for index in range(0, len(self._mapping) - 1):
+            this = self._mapping[index]
+            next = self._mapping[index + 1]
+
+            out_duration = next.out_time - this.get_end_time()
+            next.in_time = this.in_time + out_duration * factor
+
+        self._validate()
+
+    def __repr__(self):
+        s = "TimeMap(" + str(self._duration) + ", ["
+
+        first = True
+        for e in self._mapping:
+            if first:
+                first = False
+            else:
+                s += ", "
+
+            if e.out_time_end is None:
+                s += "%s > %s" % (str(e.in_time),
+                                  str(e.out_time))
+            else:
+                s += "%s > (%s, %s)" % (str(e.in_time),
+                                        str(e.out_time),
+                                        str(e.out_time_end))
+
+        s += "])"
+        return s
+
+    def to_simple(self):
+        s = common.Simple(self)
+        s.set('duration', self._duration)
+        s.set('mapping', [e.to_simple() for e in self._mapping])
+        return s
+
+    @staticmethod
+    def from_simple(s, obj=None):
+        if obj is None:
+            obj = TimeMap(None)
+
+        obj._duration = s.get('duration')
+        obj._mapping = [MappingEntry.from_simple(common.Simple.from_data(s, entry_data))
+                        for entry_data in s.get('mapping')]
+
+        return obj

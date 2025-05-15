@@ -38,6 +38,8 @@ class TestSimple(unittest.TestCase):
             resource.ColorResource(),
             resource.ImageResource("a.jpg"),
             resource.VideoResource("a.mp4"),
+            resource.MappingEntry(2, 3, 5),
+            resource.TimeMap(5),
 
             variable.StaticValue(100),
             variable.ExpressionValue(expression.Value('a')),
