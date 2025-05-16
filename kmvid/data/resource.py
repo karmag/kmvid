@@ -148,8 +148,10 @@ class ImageResource(Resource):
 
     def get_frame(self, time):
         if self.image is None:
-            with PIL.Image.open(self.path) as img:
-                self.image = img if self.mode is None else img.convert(self.mode)
+            self.image = PIL.Image.open(self.path)
+            self.image = (self.image
+                          if self.mode is None
+                          else self.image.convert(self.mode))
 
         self._heartbeat()
         return self.image.copy()

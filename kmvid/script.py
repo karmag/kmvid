@@ -56,3 +56,4 @@ Crop = kmvid.data.effect.Crop
 Draw = kmvid.data.effect.Draw
 Border = kmvid.data.effect.Border
 BorderCorner = kmvid.data.effect.BorderCorner
+AlphaShape = kmvid.data.effect.AlphaShape

@@ -192,6 +192,41 @@ class TestEffect(testbase.Testbase):
 
         self.assertImage("fade", c)
 
+    def test_alpha_shape_line(self):
+        pad = 5
+        size = 100 - 2 * pad
+
+        parts = [
+            # horizontal / vertical
+            (0, size, 0, -size),
+            (0, 0, size, 0),
+            (0, 0, 0, size),
+            (size, 0, -size, 0),
+            # diagonals
+            (0, size, size, -size),
+            (0, 0, size, size),
+            (size, 0, -size, size),
+            (size, size, -size, -size),
+        ]
+
+        size = 100
+
+        c = clip.color(width = size * len(parts) + pad * (len(parts) + 1),
+                       height = size + pad * 2,
+                       color = (0, 150, 150))
+
+        for index, (x, y, w, h) in enumerate(parts):
+            alpha = clip.color(width=size, height=size, color=(255, 0, 0))
+            alpha.add_item(effect.AlphaShape(x=x+pad, y=y+pad, w=w, h=h))
+
+            shape = clip.color(width=size, height=size, color=(0, 0, 0))
+            shape.add_item(effect.Pos(x = pad + index * (size + pad),
+                                      y = pad))
+            shape.add_item(alpha)
+            c.add_item(shape)
+
+        self.assertImage("alpha_shape_line", c)
+
     def check(self, clp, eff, expected_image):
         base = clip.color(width=6, height=3, color=B)
         base.add_item(clp)

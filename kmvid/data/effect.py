@@ -1,6 +1,7 @@
 import kmvid.data.common as common
 import kmvid.data.clip as clip
 import kmvid.data.draw as draw
+import kmvid.data.gradient as gradient
 import kmvid.data.variable as variable
 import kmvid.data.state as state
 
@@ -8,6 +9,7 @@ import enum
 import sys
 import PIL.ImageChops
 import PIL.ImageOps
+import numpy as np
 
 class Effect(common.Node, variable.VariableHold):
     def __init__(self, args=None, kwargs=None):
@@ -583,3 +585,61 @@ class BorderCorner(common.Node, variable.VariableHold):
         common.Node.from_simple(s, obj)
         variable.VariableHold.from_simple(s, obj)
         return obj
+
+class AlphaShapeType(enum.Enum):
+    LINE = 0
+
+@variable.holder
+class AlphaShape(Effect):
+    """Applies an alpha shape to the clip.
+
+    Line shape. Treats w/h as x2/y2 coordinates for the line
+    end-point. The shape transitions from transparency at x/y to
+    opaqueness at w/h taking the angle of the line into consideration.
+
+    """
+    type = variable.VariableConfig(AlphaShapeType, AlphaShapeType.LINE)
+    x = variable.VariableConfig(int, 0)
+    y = variable.VariableConfig(int, 0)
+    w = variable.VariableConfig(
+        int, 100,
+        doc="""Corresponding absolute value is x + w. Use negative values to point left.""")
+    h = variable.VariableConfig(
+        int, 0,
+        doc="""Corresponding absolute value is y + h. Use negative values to point up..""")
+    min_value = variable.VariableConfig(float, 0)
+    max_value = variable.VariableConfig(float, 1)
+    alpha_strategy = variable.VariableConfig(
+        common.AlphaStrategyType, common.AlphaStrategyType.MIN)
+
+    def __init__(self, *args, **kwargs):
+        Effect.__init__(self, args=args, kwargs=kwargs)
+
+    def apply(self, render):
+        x1 = self.x
+        y1 = self.y
+        x2 = x1 + self.w
+        y2 = y1 + self.h
+
+        min_value = max(int(self.min_value * 255), 0)
+        max_value = min(int(self.max_value * 255), 255)
+        value_range = max_value - min_value
+
+        x_diff, y_diff = gradient.line_gradient(((x1, y1), (x2, y2)))
+
+        layer = np.empty((render.image.size[1],
+                          render.image.size[0]),
+                         dtype=np.uint8)
+        with np.nditer(layer, flags=['multi_index'], op_flags=['writeonly']) as it:
+            for e in it:
+                y, x = it.multi_index
+                value = (x - x1)*x_diff + (y - y1)*y_diff
+                value = min_value + value * value_range
+                value = max(min_value, value)
+                value = min(max_value, value)
+                e[...] = value
+
+        alpha_layer = PIL.Image.fromarray(layer, mode="L")
+        render.image = common.merge_alpha(render.image,
+                                          alpha_layer,
+                                          self.alpha_strategy)

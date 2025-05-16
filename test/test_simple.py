@@ -30,6 +30,7 @@ class TestSimple(unittest.TestCase):
             effect.Crop(),
             effect.Draw(),
             effect.Border(all={'size': 10, 'width': 20, 'height': 30}),
+            effect.AlphaShape(x=5, y=10, w=200, h=50, min_value=0.2, max_value=0.9, alpha_strategy="MAX"),
 
             expression.Function("+"),
             expression.Symbol("time"),
