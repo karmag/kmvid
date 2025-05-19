@@ -6,6 +6,7 @@ import kmvid.data.variable as variable
 import kmvid.data.state as state
 
 import PIL.ImageChops
+import PIL.ImageFilter
 import PIL.ImageOps
 import enum
 import math
@@ -732,3 +733,28 @@ class AlphaShape(Effect):
         render.image = common.merge_alpha(render.image,
                                           alpha_layer,
                                           self.alpha_strategy)
+
+class BlurType(enum.Enum):
+    BOX = 0
+    GAUSSIAN = 1
+
+@variable.holder
+class Blur(Effect):
+    type = variable.VariableConfig(BlurType, BlurType.BOX)
+    x = variable.VariableConfig(float, 2, doc="""Bluring along the X axis.""")
+    y = variable.VariableConfig(float, 2, doc="""Bluring along the Y axis.""")
+
+    def __init__(self, *args, **kwargs):
+        Effect.__init__(self, args=args, kwargs=kwargs)
+
+    def apply(self, render):
+        if self.type == BlurType.BOX:
+            render.image = render.image.filter(
+                PIL.ImageFilter.BoxBlur([self.x, self.y]))
+
+        elif self.type == BlurType.GAUSSIAN:
+            render.image = render.image.filter(
+                PIL.ImageFilter.GaussianBlur([self.x, self.y]))
+
+        else:
+            raise ValueError("Unknown blur type: %s" % str(self.type))

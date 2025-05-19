@@ -250,6 +250,46 @@ class TestEffect(testbase.Testbase):
 
         self.assertImage("alpha_shape", master)
 
+    def test_blur(self):
+        size = 100
+        pad = 5
+
+        def gen_clip():
+            c = clip.color(color="black", width=size, height=size)
+            index = 0
+            for x in range(5):
+                for y in range(5):
+                    index += 1
+                    sub = clip.color(color=((17 * index) % 256,
+                                            (719 * index) % 256,
+                                            (3527 * index) % 256),
+                                     width=size/5,
+                                     height=size/5)
+                    sub.add_item(effect.Pos(x=x*size/5, y=y*size/5))
+                    c.add_item(sub)
+            return c
+
+        parts = [
+            effect.Rotate(0),
+            effect.Blur("box", x=2, y=2),
+            effect.Blur("box", x=30, y=2),
+            effect.Blur("box", x=2, y=30),
+            effect.Blur("gaussian", x=2, y=2),
+            effect.Blur("gaussian", x=10, y=10),
+        ]
+
+        master = clip.color(color=(255, 0, 0),
+                            width=size + pad*2,
+                            height=size*len(parts) + pad*(len(parts) + 1))
+
+        for index, eff in enumerate(parts):
+            c = gen_clip()
+            c.add_item(eff)
+            c.add_item(effect.Pos(x=pad, y=index*(size + pad) + pad))
+            master.add_item(c)
+
+        self.assertImage("blur", master)
+
     def check(self, clp, eff, expected_image):
         base = clip.color(width=6, height=3, color=B)
         base.add_item(clp)
