@@ -192,40 +192,63 @@ class TestEffect(testbase.Testbase):
 
         self.assertImage("fade", c)
 
-    def test_alpha_shape_line(self):
+    def test_alpha_shape(self):
+        size = 150
         pad = 5
-        size = 100 - 2 * pad
 
-        parts = [
-            # horizontal / vertical
-            (0, size, 0, -size),
-            (0, 0, size, 0),
-            (0, 0, 0, size),
-            (size, 0, -size, 0),
-            # diagonals
-            (0, size, size, -size),
-            (0, 0, size, size),
-            (size, 0, -size, size),
-            (size, size, -size, -size),
+        def make(type, **kwargs):
+            alpha = clip.color(color="white", width=size, height=size)
+            alpha.add_item(effect.AlphaShape(type, **kwargs))
+
+            c = clip.color(color="black", width=size, height=size)
+            c.add_item(alpha)
+            return c
+
+        images = [
+            [
+                # horizontal / vertical line
+                make("line", x=0, y=size, w=0, h=-size),
+                make("line", x=0, y=0, w=size, h=0),
+                make("line", x=0, y=0, w=0, h=size),
+                make("line", x=size, y=0, w=-size, h=0),
+            ], [
+                # line diagonals
+                make("line", x=0, y=size, w=size, h=-size),
+                make("line", x=0, y=0, w=size, h=size),
+                make("line", x=size, y=0, w=-size, h=size),
+                make("line", x=size, y=size, w=-size, h=-size),
+            ], [
+                # line modifiers
+                make("line", x=size/3, y=size/3, w=size/3, h=size/3),
+                make("line", x=size/3, y=size/3, w=size/3, h=size/3, min_value=0.5),
+                make("line", x=size/3, y=size/3, w=size/3, h=size/3, max_value=0.5),
+                make("line", x=size/3, y=size/3, w=size/3, h=size/3, invert=True),
+            ], [
+                # basic ellipse
+                make("ellipse", x=0, y=0, w=size, h=size),
+                make("ellipse", x=0, y=size/3, w=size, h=size/3),
+                make("ellipse", x=size/3, y=0, w=size/3, h=size),
+            ], [
+                # ellipse modifiers
+                make("ellipse", x=size/3, y=size/3, w=size/3, h=size/3, size=size/3),
+                make("ellipse", x=size/3, y=size/3, w=size/3, h=size/3, size=size/3, min_value=0.5),
+                make("ellipse", x=size/3, y=size/3, w=size/3, h=size/3, size=size/3, max_value=0.5),
+                make("ellipse", x=size/3, y=size/3, w=size/3, h=size/3, size=size/3, invert=True),
+            ],
         ]
 
-        size = 100
+        max_width = max([len(row) for row in images])
+        master = clip.color(color=(250, 0, 0),
+                            width = size*max_width + pad*(max_width + 1),
+                            height = size*len(images) + pad*(len(images) + 1))
 
-        c = clip.color(width = size * len(parts) + pad * (len(parts) + 1),
-                       height = size + pad * 2,
-                       color = (0, 150, 150))
+        for row_num, row in enumerate(images):
+            for col_num, img in enumerate(row):
+                img.add_item(effect.Pos(x = col_num*size + (col_num + 1)*pad,
+                                        y = row_num*size + (row_num + 1)*pad))
+                master.add_item(img)
 
-        for index, (x, y, w, h) in enumerate(parts):
-            alpha = clip.color(width=size, height=size, color=(255, 0, 0))
-            alpha.add_item(effect.AlphaShape(x=x+pad, y=y+pad, w=w, h=h))
-
-            shape = clip.color(width=size, height=size, color=(0, 0, 0))
-            shape.add_item(effect.Pos(x = pad + index * (size + pad),
-                                      y = pad))
-            shape.add_item(alpha)
-            c.add_item(shape)
-
-        self.assertImage("alpha_shape_line", c)
+        self.assertImage("alpha_shape", master)
 
     def check(self, clp, eff, expected_image):
         base = clip.color(width=6, height=3, color=B)

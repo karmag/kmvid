@@ -5,11 +5,12 @@ import kmvid.data.gradient as gradient
 import kmvid.data.variable as variable
 import kmvid.data.state as state
 
-import enum
-import sys
 import PIL.ImageChops
 import PIL.ImageOps
+import enum
+import math
 import numpy as np
+import sys
 
 class Effect(common.Node, variable.VariableHold):
     def __init__(self, args=None, kwargs=None):
@@ -588,14 +589,20 @@ class BorderCorner(common.Node, variable.VariableHold):
 
 class AlphaShapeType(enum.Enum):
     LINE = 0
+    ELLIPSE = 1
 
 @variable.holder
 class AlphaShape(Effect):
     """Applies an alpha shape to the clip.
 
     Line shape. Treats w/h as x2/y2 coordinates for the line
-    end-point. The shape transitions from transparency at x/y to
-    opaqueness at w/h taking the angle of the line into consideration.
+    end-point. The shape transitions from opaqueness at x/y to
+    transparancy at w/h taking the angle of the line into
+    consideration. Size variable is ignored.
+
+    Ellipse shape. An ellipse bounded by the rectangle x/y/w/h. Size
+    determines the distance beyond the ellipse that the transition
+    takes place.
 
     """
     type = variable.VariableConfig(AlphaShapeType, AlphaShapeType.LINE)
@@ -603,10 +610,16 @@ class AlphaShape(Effect):
     y = variable.VariableConfig(int, 0)
     w = variable.VariableConfig(
         int, 100,
-        doc="""Corresponding absolute value is x + w. Use negative values to point left.""")
+        doc="""Corresponding absolute value is x + w. Negative values point left.""")
     h = variable.VariableConfig(
         int, 0,
-        doc="""Corresponding absolute value is y + h. Use negative values to point up..""")
+        doc="""Corresponding absolute value is y + h. Negative values point up.""")
+    size = variable.VariableConfig(
+        float, 0,
+        doc="""The size of the transition.""")
+    invert = variable.VariableConfig(
+        bool, False,
+        doc="""Reverses the alpha values, changing the direction the fade takes.""")
     min_value = variable.VariableConfig(float, 0)
     max_value = variable.VariableConfig(float, 1)
     alpha_strategy = variable.VariableConfig(
@@ -616,6 +629,14 @@ class AlphaShape(Effect):
         Effect.__init__(self, args=args, kwargs=kwargs)
 
     def apply(self, render):
+        if self.type == AlphaShapeType.LINE:
+            self._line_shape(render)
+        elif self.type == AlphaShapeType.ELLIPSE:
+            self._ellipse_shape(render)
+        else:
+            raise ValueError("Unknown alpha shape type: %s" % str(self.type))
+
+    def _line_shape(self, render):
         x1 = self.x
         y1 = self.y
         x2 = x1 + self.w
@@ -624,6 +645,8 @@ class AlphaShape(Effect):
         min_value = max(int(self.min_value * 255), 0)
         max_value = min(int(self.max_value * 255), 255)
         value_range = max_value - min_value
+
+        invert = self.invert
 
         x_diff, y_diff = gradient.line_gradient(((x1, y1), (x2, y2)))
 
@@ -634,9 +657,75 @@ class AlphaShape(Effect):
             for e in it:
                 y, x = it.multi_index
                 value = (x - x1)*x_diff + (y - y1)*y_diff
+                if not invert:
+                    value = 1 - value
                 value = min_value + value * value_range
                 value = max(min_value, value)
                 value = min(max_value, value)
+                e[...] = value
+
+        alpha_layer = PIL.Image.fromarray(layer, mode="L")
+        render.image = common.merge_alpha(render.image,
+                                          alpha_layer,
+                                          self.alpha_strategy)
+
+    def _ellipse_shape(self, render):
+        x1 = self.x + self.w/2
+        y1 = self.y + self.h/2
+        wr = self.w/2
+        hr = self.h/2
+
+        min_value = max(int(self.min_value * 255), 0)
+        max_value = min(int(self.max_value * 255), 255)
+        value_range = max_value - min_value
+
+        size = self.size
+        invert = self.invert
+
+        layer = np.empty((render.image.size[1],
+                          render.image.size[0]),
+                         dtype=np.uint8)
+        with np.nditer(layer, flags=['multi_index'], op_flags=['writeonly']) as it:
+            for e in it:
+                y, x = it.multi_index
+
+                dx = x - x1
+                dy = y - y1
+                magnitude = math.hypot(dx, dy)
+
+                angle = 0
+                if dx != 0:
+                    angle = math.atan(dy / dx)
+                elif magnitude != 0:
+                    angle = math.asin(dy / magnitude)
+
+                radius = (wr*hr) / math.sqrt((hr * math.cos(angle))**2 +
+                                             (wr * math.sin(angle))**2)
+
+                value = 0
+                if magnitude < radius:
+                    if invert:
+                        value = min_value
+                    else:
+                        value = max_value
+                elif magnitude < radius + size:
+                    outer_wr = wr + size
+                    outer_hr = hr + size
+                    outer_radius = ((outer_wr * outer_hr) /
+                                    math.sqrt((outer_hr * math.cos(angle))**2 +
+                                              (outer_wr * math.sin(angle))**2))
+
+                    percentage = (magnitude - radius) / (outer_radius - radius)
+                    if invert:
+                        value = min_value + percentage * value_range
+                    else:
+                        value = min_value + (1 - percentage) * value_range
+                else:
+                    if invert:
+                        value = max_value
+                    else:
+                        value = min_value
+
                 e[...] = value
 
         alpha_layer = PIL.Image.fromarray(layer, mode="L")

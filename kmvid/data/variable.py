@@ -97,12 +97,14 @@ class VariableHold(common.Simpleable):
 
     def set_value(self, var_name, value):
         var = self.get_variable(var_name)
+        if var is None:
+            raise ValueError("No variable with name '%s'" % var_name)
         var.set_value(value)
         return self
 
     def set_all_values(self, kvs):
         for k in kvs:
-            self.get_variable(k).set_value(kvs[k])
+            self.set_value(k, kvs[k])
         return self
 
     def to_simple(self):
