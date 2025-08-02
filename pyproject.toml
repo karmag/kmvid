@@ -1,0 +1,20 @@
+[project]
+name = "kmvid"
+version = "0.1.0"
+description = "Add your description here"
+readme = "readme.txt"
+requires-python = ">=3.11"
+dependencies = [
+    "pillow>=11.3.0",
+    "scipy>=1.16.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.4,<0.9.0"]
+build-backend = "uv_build"
+
+[project.scripts]
+doc = "kmvid.tool.doc:run"
+
+[tool.ruff.lint]
+ignore = ["E731"]

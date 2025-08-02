@@ -1,12 +1,16 @@
-Include
-Lib
-Scripts
-pyvenv.cfg
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
 
-__pycache__
-*.pyc
+# Virtual environments
+.venv
 
-bin
-docs/*
-test-errors
+# Project files
+bin/
+doc/doc.html
+test-errors/
 example_*.mp4
