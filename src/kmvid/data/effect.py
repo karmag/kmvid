@@ -665,7 +665,7 @@ class AlphaShape(Effect):
                 value = min(max_value, value)
                 e[...] = value
 
-        alpha_layer = PIL.Image.fromarray(layer, mode="L")
+        alpha_layer = PIL.Image.fromarray(layer)
         render.image = common.merge_alpha(render.image,
                                           alpha_layer,
                                           self.alpha_strategy)
@@ -729,7 +729,7 @@ class AlphaShape(Effect):
 
                 e[...] = value
 
-        alpha_layer = PIL.Image.fromarray(layer, mode="L")
+        alpha_layer = PIL.Image.fromarray(layer)
         render.image = common.merge_alpha(render.image,
                                           alpha_layer,
                                           self.alpha_strategy)
