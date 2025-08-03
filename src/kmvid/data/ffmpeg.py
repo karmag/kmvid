@@ -6,8 +6,8 @@ import subprocess
 
 logger = logging.getLogger(__name__)
 
-_FFMPEG_PATH = "bin/ffmpeg.exe"
-_FFPROBE_PATH = "bin/ffprobe.exe"
+_FFMPEG_PATH = "ffmpeg"
+_FFPROBE_PATH = "ffprobe"
 
 class FfmpegWriter:
     def __init__(self, filename, size, fps):

@@ -10,7 +10,6 @@ wheels/
 .venv
 
 # Project files
-bin/
 doc/doc.html
 test-errors/
 example_*.mp4

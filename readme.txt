@@ -1,6 +1,6 @@
 Setup
 
-    ffmpeg and ffprobe executables needed in bin/ directory, can be
+    ffmpeg and ffprobe executables needed in your path, can be
     downloaded at https://ffmpeg.org/download.html
 
 Tests
