@@ -2,4 +2,4 @@
 
 cls
 
-uv run python -m unittest discover --start-directory test -v
+uv run pytest

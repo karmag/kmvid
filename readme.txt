@@ -7,7 +7,7 @@ Tests
 
     Run tests with test.bat or use command
 
-        > uv run python -m unittest discover --start-directory test -v
+        > uv run pytest
 
 Build
 

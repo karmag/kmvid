@@ -7,14 +7,14 @@ import kmvid.data.state as state
 import enum
 import testbase
 
-class TestEnum(enum.Enum):
+class EnumTest(enum.Enum):
     ABC = 1
     DEF = 2
 
 @variable.holder
-class TestClass(variable.VariableHold):
+class ClassTest(variable.VariableHold):
     x = variable.VariableConfig(int)
-    enumerati = variable.VariableConfig(TestEnum, TestEnum.ABC)
+    enumerati = variable.VariableConfig(EnumTest, EnumTest.ABC)
     def __init__(self, *args, **kwargs):
         variable.VariableHold.__init__(self, args=args, kwargs=kwargs)
 
@@ -99,9 +99,9 @@ class TestVariable(testbase.Testbase):
                 self.assertEqual(expected, var.get_value())
 
     def test_enum_values(self):
-        self.assertEqual(TestEnum.DEF, TestClass(enumerati=TestEnum.DEF).enumerati)
-        self.assertEqual(TestEnum.DEF, TestClass(enumerati="def").enumerati)
-        self.assertEqual(TestEnum.DEF, TestClass(enumerati=2).enumerati)
+        self.assertEqual(EnumTest.DEF, ClassTest(enumerati=EnumTest.DEF).enumerati)
+        self.assertEqual(EnumTest.DEF, ClassTest(enumerati="def").enumerati)
+        self.assertEqual(EnumTest.DEF, ClassTest(enumerati=2).enumerati)
 
     def test_expression_values(self):
         with state.State():

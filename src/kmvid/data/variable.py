@@ -292,7 +292,7 @@ def make_val(value, *args):
         if isinstance(x, (str, TimeValueType)):
             kwargs['time_type'] = common.to_enum(x, TimeValueType)
 
-        elif isinstance(x (int, float)):
+        elif isinstance(x, (int, float)):
             kwargs['time'] = x
 
     varval = None
