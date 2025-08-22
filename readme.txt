@@ -17,13 +17,9 @@ Build
 
 lint check
 
-    Install ruff
-
-        > uv tool install ruff
-
     Run check
 
-        > uv tool run ruff check kmvid
+        > uv tool run ruff check src
 
 Generate doc
 
@@ -35,9 +31,9 @@ Examples
 
     Generates video file
 
-        > uv run python example\cards.py
-        > uv run python example\text_blocks.py
+        > uv run example\cards.py
+        > uv run example\text_blocks.py
 
     Prints fonts with variants found on the system to console
 
-        > uv run python example\fonts.py
+        > uv run example\fonts.py

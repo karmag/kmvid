@@ -106,7 +106,7 @@ class TestVariable(testbase.Testbase):
     def test_expression_values(self):
         with state.State():
             c = clip.color(color=(30, 30, 30), width=100, height=100)
-            c.add_item(
+            c.add(
                 effect.Draw()
                 .config(fill=(255, 255, 255))
                 .rectangle(

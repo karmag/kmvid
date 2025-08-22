@@ -51,8 +51,10 @@ class Project(common.Node, variable.VariableHold):
             return min(clip, user)
         return clip or user
 
-    def add_clip(self, clp):
-        self.root_clip.add_item(clp)
+    def add(self, *clips):
+        for clp in clips:
+            self.root_clip.add(clp)
+        return self
 
     def get_frame(self, time=0):
         with state.State():

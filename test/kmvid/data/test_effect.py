@@ -109,20 +109,20 @@ class TestEffect(testbase.Testbase):
                          (None, 100),
                          (50, 100)]:
                 c = clip.color(width=200, height=200, color=(50, 0, 0))
-                c.add_item(effect.Draw()
-                           .config(fill=(0, 50, 0), pen_width=0)
-                           .rectangle(x=0, y=0, width=100, height=200)
-                           .config(fill=(90, 90, 150))
-                           .rectangle(x=25, y=25, width=50, height=50))
-                c.add_item(effect.Resize(width=w, height=h, strategy=strategy))
-                c.add_item(effect.Pos(x=x * 250 + 10, y=y * 250 + 10))
-                base.add_item(c)
-                base.add_item(effect.Draw()
-                              .config(color=(255, 255, 255), pen_width=1)
-                              .rectangle(x=x * 250 + 10,
-                                         y=y * 250 + 10,
-                                         width=50,
-                                         height=100))
+                c.add(effect.Draw()
+                      .config(fill=(0, 50, 0), pen_width=0)
+                      .rectangle(x=0, y=0, width=100, height=200)
+                      .config(fill=(90, 90, 150))
+                      .rectangle(x=25, y=25, width=50, height=50))
+                c.add(effect.Resize(width=w, height=h, strategy=strategy))
+                c.add(effect.Pos(x=x * 250 + 10, y=y * 250 + 10))
+                base.add(c)
+                base.add(effect.Draw()
+                         .config(color=(255, 255, 255), pen_width=1)
+                         .rectangle(x=x * 250 + 10,
+                                    y=y * 250 + 10,
+                                    width=50,
+                                    height=100))
                 x += 1
             x = 0
             y += 1
@@ -154,11 +154,11 @@ class TestEffect(testbase.Testbase):
                     'xxxxxx'])
 
         c = clip.color(width=100, height=100, color=G)
-        c.add_item(effect.Border(width=10,
-                                 all={'size': 30},
-                                 tl={'width': 10},
-                                 tr={'type': effect.BorderCornerType.LINE},
-                                 bl={'size': None, 'width': None, 'height': None}))
+        c.add(effect.Border(width=10,
+                            all={'size': 30},
+                            tl={'width': 10},
+                            tr={'type': effect.BorderCornerType.LINE},
+                            bl={'size': None, 'width': None, 'height': None}))
 
         self.assertImage("mixed", c)
 
@@ -170,25 +170,25 @@ class TestEffect(testbase.Testbase):
 
         for i in range(10):
             tile = clip.color(width=size, height=size, color=(255, 0, 0))
-            tile.add_item(effect.Fade(fade_in=10))
-            tile.add_item(effect.Pos(x=i*size))
+            tile.add(effect.Fade(fade_in=10))
+            tile.add(effect.Pos(x=i*size))
             tile.start_time = -i
             tile.duration = 10
-            c.add_item(tile)
+            c.add(tile)
 
         for i in range(10):
             tile = clip.color(width=size, height=size, color=(0, 255, 0))
-            tile.add_item(effect.Fade(fade_out=10))
-            tile.add_item(effect.Pos(x=i*size, y=size))
+            tile.add(effect.Fade(fade_out=10))
+            tile.add(effect.Pos(x=i*size, y=size))
             tile.start_time = -i
             tile.duration = 10
-            c.add_item(tile)
+            c.add(tile)
 
         for i in range(10):
             tile = clip.color(width=size, height=size, color=(0, 0, 255))
-            tile.add_item(effect.Fade(value=(i+1)/10))
-            tile.add_item(effect.Pos(x=i*size, y=2*size))
-            c.add_item(tile)
+            tile.add(effect.Fade(value=(i+1)/10))
+            tile.add(effect.Pos(x=i*size, y=2*size))
+            c.add(tile)
 
         self.assertImage("fade", c)
 
@@ -198,10 +198,10 @@ class TestEffect(testbase.Testbase):
 
         def make(type, **kwargs):
             alpha = clip.color(color="white", width=size, height=size)
-            alpha.add_item(effect.AlphaShape(type, **kwargs))
+            alpha.add(effect.AlphaShape(type, **kwargs))
 
             c = clip.color(color="black", width=size, height=size)
-            c.add_item(alpha)
+            c.add(alpha)
             return c
 
         images = [
@@ -244,9 +244,9 @@ class TestEffect(testbase.Testbase):
 
         for row_num, row in enumerate(images):
             for col_num, img in enumerate(row):
-                img.add_item(effect.Pos(x = col_num*size + (col_num + 1)*pad,
-                                        y = row_num*size + (row_num + 1)*pad))
-                master.add_item(img)
+                img.add(effect.Pos(x = col_num*size + (col_num + 1)*pad,
+                                   y = row_num*size + (row_num + 1)*pad))
+                master.add(img)
 
         self.assertImage("alpha_shape", master)
 
@@ -265,8 +265,8 @@ class TestEffect(testbase.Testbase):
                                             (3527 * index) % 256),
                                      width=size/5,
                                      height=size/5)
-                    sub.add_item(effect.Pos(x=x*size/5, y=y*size/5))
-                    c.add_item(sub)
+                    sub.add(effect.Pos(x=x*size/5, y=y*size/5))
+                    c.add(sub)
             return c
 
         parts = [
@@ -284,22 +284,22 @@ class TestEffect(testbase.Testbase):
 
         for index, eff in enumerate(parts):
             c = gen_clip()
-            c.add_item(eff)
-            c.add_item(effect.Pos(x=pad, y=index*(size + pad) + pad))
-            master.add_item(c)
+            c.add(eff)
+            c.add(effect.Pos(x=pad, y=index*(size + pad) + pad))
+            master.add(c)
 
         self.assertImage("blur", master)
 
     def check(self, clp, eff, expected_image):
         base = clip.color(width=6, height=3, color=B)
-        base.add_item(clp)
+        base.add(clp)
 
         if eff:
             if isinstance(eff, list):
                 for e in eff:
-                    clp.add_item(e)
+                    clp.add(e)
             else:
-                clp.add_item(eff)
+                clp.add(eff)
 
         with state.State():
             render = base.get_frame()

@@ -6,23 +6,8 @@ import kmvid.data.text
 
 import PIL.ImageColor
 
-def _add_attr(obj, attr, value):
-    if attr in obj.__dict__:
-        raise Exception(f"Attribute {attr} already exists in object {obj}")
-    obj.__dict__[attr] = value
-
 Val = kmvid.data.variable.make_val
-
-def Project(*args, **kwargs):
-    p = kmvid.data.project.Project(*args, **kwargs)
-
-    def add(*clips):
-        for clp in clips:
-            p.add_clip(clp)
-        return p
-    _add_attr(p, 'add', add)
-
-    return p
+Project = kmvid.data.project.Project
 
 def Clip(file_or_color, **kwargs):
     clip_kws, res_kws = kmvid.data.clip.Clip.split_kwargs(kwargs)
@@ -39,12 +24,6 @@ def Clip(file_or_color, **kwargs):
         res = kmvid.data.resource.from_file(file_or_color, **res_kws)
 
     clip = kmvid.data.clip.Clip(res, **clip_kws)
-
-    def add(*items):
-        for itm in items:
-            clip.add_item(itm)
-        return clip
-    _add_attr(clip, 'add', add)
 
     return clip
 

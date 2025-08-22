@@ -11,7 +11,7 @@ class TestClip(testbase.Testbase):
         offset = clip.color(color=(200, 200, 200), width=50, height=150)
         offset.start_time = 5
         offset.duration = 10
-        offset.add_item(effect.Pos(x=50))
+        offset.add(effect.Pos(x=50))
 
         r = clip.color(color=(255, 0, 0), width=50, height=50)
         g = clip.color(color=(0, 255, 0), width=50, height=50)
@@ -25,14 +25,14 @@ class TestClip(testbase.Testbase):
         g.start_time = 0
         b.start_time = 8
 
-        g.add_item(effect.Pos(y=50))
-        b.add_item(effect.Pos(y=100))
+        g.add(effect.Pos(y=50))
+        b.add(effect.Pos(y=100))
 
-        offset.add_item(r)
-        offset.add_item(g)
-        offset.add_item(b)
+        offset.add(r)
+        offset.add(g)
+        offset.add(b)
 
-        root.add_item(offset)
+        root.add(offset)
 
         with state.State():
             state.set_time(10)

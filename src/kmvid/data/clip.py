@@ -69,12 +69,15 @@ class Clip(common.Node, variable.VariableHold):
 
         return value
 
-    def add_item(self, item):
-        if isinstance(item, (Clip, effect.Effect)):
-            self.items.append(item)
-            item.parent = self
-        else:
-            raise Exception("Unknown argument type %s" % str(type(item)))
+    def add(self, *items):
+        for item in items:
+            if isinstance(item, (Clip, effect.Effect)):
+                self.items.append(item)
+                item.parent = self
+            else:
+                raise Exception("Unknown argument type %s" % str(type(item)))
+
+        return self
 
     def get_frame(self):
         return self._get_frame_internal(None)
