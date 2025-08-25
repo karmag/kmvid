@@ -57,33 +57,44 @@ class Project(common.Node, variable.VariableHold):
         return self
 
     def get_frame(self, time=0):
+        """Returns the frame at the given time as an image.
+
+        Call 'show' on the image to display it directly.
+
+        """
         with state.State():
             state.set_time(time)
             render = self.root_clip.get_frame()
             return render.image
 
     def get_frame_wall(self, width=1920, cols=3, rows=None, frame_selection=None):
-        if rows is None and frame_selection is None:
-            rows = 3
+        """Returns an image with a grid of frames from the project.
 
-        if isinstance(frame_selection, (list, tuple)):
-            pass
-        elif type(frame_selection).__name__ == 'generator':
-            frame_selection = [n for n in frame_selection]
-        elif frame_selection is None:
-            frame_selection = []
+        Call 'show' on the image to display it directly.
 
+        width -- Sets the width of the returned image. The height of
+        the image is dynamically determined from frame selection
+        arguments.
+
+        cols -- The number of frames to display horizontally.
+
+        rows -- The number of frames to display vertically. Defaults
+        to 3 if no other discriminatory arguments are given. The frame
+        selection is spread evenly over the duration of the project.
+
+        frame_selection -- An iterable containing the times at which
+        to extract frames. If given the rows argument will be ignored,
+        it will be set automatically to accommodate all the given
+        times.
+
+        """
+        if frame_selection is None:
+            rows = rows or 3
             total_frames = cols * rows
             step = self.duration / total_frames
-
-            time = 0
-            for _ in range(total_frames):
-                frame_selection.append(time)
-                time += step
+            frame_selection = [t * step for t in range(total_frames)]
         else:
-            raise Exception(f"Unknown frame_selection argument type {type(frame_selection)}")
-
-        if rows is None:
+            frame_selection = [t for t in frame_selection]
             rows = math.ceil(len(frame_selection) / cols)
 
         tile_width = int(width / cols)
@@ -104,6 +115,7 @@ class Project(common.Node, variable.VariableHold):
         return image
 
     def write(self):
+        """Renders the project to the filename given."""
         with state.State():
             time = 0
             frame_time = 1 / self.fps

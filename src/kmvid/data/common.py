@@ -34,7 +34,7 @@ def to_enum(value, enum_type):
             return entry
 
     raise ValueError("Unable to interpret '%s' as enum of type %s" % (
-        str(value), type.__name__))
+        str(value), enum_type.__name__))
 
 #--------------------------------------------------
 # simple

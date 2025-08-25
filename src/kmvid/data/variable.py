@@ -35,6 +35,10 @@ def holder(cls):
     cls.get_variable_configs = get_all
 
     def split_kwargs(kwargs):
+        """Returns (mine, other) which are both dicts. 'mine' containing the
+        keywords that would be consumed by this class's constructor.
+
+        """
         configs = getattr(cls, "_VariableHold__variable_configs", {})
         mine = {}
         other = {}

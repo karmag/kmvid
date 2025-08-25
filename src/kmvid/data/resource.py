@@ -24,8 +24,10 @@ def is_recognized_format(path):
 
     """
     _, ext = os.path.splitext(path)
-    ext = ext.lower()[1:]
-    return ext in IMAGE_FORMATS or ext in VIDEO_FORMATS
+    if len(ext) > 0:
+        ext = ext.lower()[1:]
+        return ext in IMAGE_FORMATS or ext in VIDEO_FORMATS
+    return False
 
 def from_file(path, **kwargs):
     """Creates a resource from the given file path."""
@@ -68,7 +70,7 @@ class Resource(common.Simpleable):
         return obj
 
 class ColorResource(Resource):
-    def __init__(self, width=100, height=100, color=(255, 255, 255), mode=None):
+    def __init__(self, color=(0, 0, 0), width=100, height=100, mode=None):
         Resource.__init__(self)
         self.width = width
         self.height = height

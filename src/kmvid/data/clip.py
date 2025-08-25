@@ -4,14 +4,42 @@ import kmvid.data.variable as variable
 import kmvid.data.resource as resource
 import kmvid.data.state as state
 
-def color(width=100, height=100, color=(0, 0, 0), mode=None):
-    return Clip(resource.ColorResource(width, height, color, mode))
+def color(color=(0, 0, 0), width=100, height=100, mode=None, **clip_args):
+    """Creates a color clip."""
+    return Clip(resource.ColorResource(color = color,
+                                       width = width,
+                                       height = height,
+                                       mode = mode),
+                **clip_args)
 
-def image(path, mode=None):
-    return Clip(resource.ImageResource(path, mode))
+def image(path, mode=None, **clip_args):
+    """Creates an image clip from the given path."""
+    return Clip(resource.ImageResource(path, mode),
+                **clip_args)
 
-def video(path):
-    return Clip(resource.VideoResource(path))
+def video(path, **clip_args):
+    """Creates a video clip from the given path."""
+    return Clip(resource.VideoResource(path),
+                **clip_args)
+
+def clip(path_or_color, **args):
+    """Creates a clip.
+
+    The first argument is used as a discriminator. If it's a string
+    that can feasibly be interpreted as a path to a known file format
+    it's treated as such. Otherwise it's interpreted as a color.
+
+    Keyword arguments must match either the Clip constructor or the
+    corresponding Resource constructor.
+
+    """
+    if (isinstance(path_or_color, str) and
+        resource.is_recognized_format(path_or_color)):
+        clip_kws, other_kws = Clip.split_kwargs(args)
+        return Clip(resource.from_file(path, **other_kws),
+                    **clip_kws)
+    else:
+        return color(color=path_or_color, **args)
 
 @variable.holder
 class Clip(common.Node, variable.VariableHold):
