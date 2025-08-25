@@ -1,7 +1,6 @@
 import collections
 import enum
 import json
-import math
 
 import PIL.ImageChops
 

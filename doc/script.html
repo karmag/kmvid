@@ -1,0 +1,177 @@
+<html><head><title>kmvid script</title><style>
+:root {
+    --main-border: 5px;
+
+    --col-bg: #333;
+    --col-bg-alt: #111;
+    --col-text: #eee;
+}
+
+body {
+    background: var(--col-bg-alt);
+    color: var(--col-text);
+    font-family: arial;
+    font-size: 18px;
+}
+
+h1, h2, h3 {
+    margin: 0;
+    margin-top: 0.2em;
+    margin-bottom: 0.5em;
+}
+
+h1 {
+    font-size: 160%;
+    background: #555;
+}
+
+h2 {
+    font-size: 120%;
+    background: #444;
+}
+
+h3 {
+    font-size: 110%;
+    background: rgb(38, 38, 38);
+}
+
+a {
+    color: var(--col-text);
+    text-decoration: none;
+}
+
+.indent {
+    margin-left: 1.2em;
+}
+
+.doc {
+    background: rgb(40, 40, 62);
+    width: 80%;
+}
+
+.code {
+    background: #336;
+    color: white;
+    border: 1px solid white;
+    margin-left: 3em;
+    padding: 0.2em;
+    font-size: 80%;
+    width: fit-content;
+}
+
+#main {
+    background: var(--col-bg);
+    margin: var(--main-border);
+
+    display: grid;
+    grid-template-columns: max-content 5px 1fr;
+}
+
+.divider {
+    background: var(--col-bg-alt);
+}
+
+#menu, #content {
+    height: calc(100vh - (var(--main-border) * 6));
+    padding: var(--main-border);
+    overflow-y: auto;
+}
+
+#menu {
+    padding-right: 1em;
+}
+
+.menu-item {
+    display: block;
+}
+
+.menu-sub-item {
+    display: block;
+    font-size: 90%;
+}
+
+.menu-space {
+    margin-top: 1em;
+}
+
+.variable-table {
+    border: 1px solid var(--col-text);
+}
+
+.variable-table th {
+    background: #336;
+    padding: 0.2em;
+    padding-left: 0.5em;
+    padding-right: 2em;
+    text-align: left;
+    text-transform: lowercase;
+}
+
+.variable-table td {
+    background: #112;
+    padding-left: 1em;
+    padding-right: 1em;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+}
+
+.enum-table td {
+    background: var(--col-bg-alt);
+}
+
+.variable {
+    color: #ff3;
+}
+
+.variable-supplement {
+    color: #66e;
+    font-size: 90%;
+}
+</style></head><body><div id = "main"><div id = "menu"><div class = "menu-item"><a href = "#overview">Overview</a></div><div class = "indent"><div class = "menu-sub-item"><a href = "#setup">Setup</a></div><div class = "menu-sub-item"><a href = "#concepts">Concepts</a></div></div><div class = "menu-space"></div><div class = "menu-item"><a href = "#effect">Effect</a></div><div class = "indent"><div class = "menu-sub-item"><a href = "#alphashape">AlphaShape</a></div><div class = "menu-sub-item"><a href = "#blur">Blur</a></div><div class = "menu-sub-item"><a href = "#border">Border</a></div><div class = "menu-sub-item"><a href = "#bordercorner">BorderCorner</a></div><div class = "menu-sub-item"><a href = "#crop">Crop</a></div><div class = "menu-sub-item"><a href = "#fade">Fade</a></div><div class = "menu-sub-item"><a href = "#pos">Pos</a></div><div class = "menu-sub-item"><a href = "#resize">Resize</a></div><div class = "menu-sub-item"><a href = "#rotate">Rotate</a></div></div><div class = "menu-space"></div><div class = "menu-item"><a href = "#draw">Draw</a></div><div class = "indent"><div class = "menu-sub-item"><a href = "#about">About</a></div><div class = "menu-sub-item"><a href = "#config">config</a></div><div class = "menu-sub-item"><a href = "#ellipse">ellipse</a></div><div class = "menu-sub-item"><a href = "#line">line</a></div><div class = "menu-sub-item"><a href = "#rectangle">rectangle</a></div><div class = "menu-sub-item"><a href = "#text">text</a></div></div><div class = "menu-space"></div></div><div class = "divider"></div><div id = "content"><h1 id = "overview">Overview</h1><div class = "indent"><h2 id = "setup">Setup</h2><div class = "indent"><div><div><p>Get ffmpeg and ffprobe into your path from <a href = "https://ffmpeg.org/download.html">https://ffmpeg.org/download.html</a></p><pre class = "code">from kmvid.script import *
+
+p = Project(width=800, height=400, fps=60, filename="video.mp4", duration=5)
+
+circle = Clip("black", width=300, height=300)
+circle.add(Draw()
+           .config(color="white", pen_width=3, fill=(50, 50, 50))
+           .ellipse(radius=150))
+circle.add(Pos(horizontal={0: 0, 5: 1}, vertical=0.5, weight=0))
+p.add(circle)
+
+line = Clip("cyan", width=250, height=25)
+line.add(Rotate(angle={0: 0, 5: 360*3}))
+line.add(Pos(horizontal=0.5, vertical=0.5))
+circle.add(line)
+
+p.write()</pre></div></div></div><div style = "height: 2em;"></div><h2 id = "concepts">Concepts</h2><div class = "indent"><div><h3>Building blocks</h3><div class = "indent"><p>The core components are projects, clips and effects. Projects provides functionality to render videos and images. Clips can contain other clips and effects, projects can only contain clips.</p><pre class = "code">from kmvid.script import *
+
+p = Project(duration=3)
+c = Clip("red", width=200, height=100)
+c.add(Pos(x=50, y=90))
+c.add(Rotate(45))
+p.add(c)
+p.write() # creates output.mp4
+
+# Can also be chained giving the same result
+Project(duration=3).add(
+    Clip("red", width=200, height=100).add(
+        Pos(x=50, y=90),
+        Rotate(45),
+    )
+).write()</pre><p>Clips and effects are applied in the same order that they are added, each applying any transformation to the output of the previous item. This means that, for instance, Crop+Rotate is not the same as Rotate+Crop. </p></div><h3>Variables</h3><div class = "indent"><p>The variables on clips and effects can be set either through keywords in the constructor or through regular attribute access. </p><pre class = "code">pos = Pos(x=100)
+pos.x = 200</pre><p>Variable values are coerced when possible. </p><table class = "variable-table"><tr><th>Variable type</th><th>Value</th><th>Examples</th></tr><tr><td>int,&nbsp;float,&nbsp;str</td><td>Coerced as if being passed to the corresponding class.</td><td>25<br>12.75<br>"10.5"</td></tr><tr><td>enum</td><td>Strings are enum names (ignores case). int for the corresponding ordinal.</td><td>TimeValueType.LINEAR<br>"linear"<br>1</td></tr><tr><td>time</td><td>Defaults to seconds as a float value. String values allows for suffix to indicate the time unit. Time units are [h]our [m]inute [s]econd [ms]illisecond. Strings also allow for multiple values in a row which will be added up.</td><td>5.75<br>"1h40m12s"<br>"40m 1h -50000ms"</td></tr></table><pre class = "code">fade = Fade(value          = "0.75",
+            fade_in        = 2.5,
+            fade_out       = "450ms",
+            alpha_strategy = "overwrite")</pre><p>Variables can be set to change over time by using a dict that maps times to values. By default the transition between values will be linear. To change the way values moves between points use Val to explicitly set the TimeValueType. </p><p>NONE means no transition so values are held until the next value is encountered causing a sharp cut between values. LINEAR makes a simple linear move from one value to the next. CURVE, BOUNDED_CURVE, and LOOSE_CURVE makes increasingly loose curves between the given points, these require at least three points to function properly. </p><pre class = "code"># Moves from left to right over 3 seconds
+pos = Pos(horizontal = {0: 0, 3: 1})
+
+# Stay still to the left, at 3 seconds jumps to the right
+pos = Pos(horizontal = {0: Val(0, "none"), 3: 1})</pre></div></div></div><div style = "height: 2em;"></div></div><h1 id = "effect">Effect</h1><div class = "indent"><h2 id = "alphashape">AlphaShape</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>type</td><td>AlphaShapeType</td><td>"LINE"</td><tr></tr><td>x</td><td>int</td><td>0</td><tr></tr><td>y</td><td>int</td><td>0</td><tr></tr><td>w</td><td>int</td><td>100</td><tr></tr><td>h</td><td>int</td><td>0</td><tr></tr><td>size</td><td>float</td><td>0</td><tr></tr><td>invert</td><td>bool</td><td>False</td><tr></tr><td>min_value</td><td>float</td><td>0</td><tr></tr><td>max_value</td><td>float</td><td>1</td><tr></tr><td>alpha_strategy</td><td>AlphaStrategyType</td><td>"MIN"</td></table><div><div class = "doc"><p>Applies an alpha shape to the clip.</p><p>    Line shape. Treats w/h as x2/y2 coordinates for the line    end-point. The shape transitions from opaqueness at x/y to    transparancy at w/h taking the angle of the line into    consideration. Size variable is ignored.</p><p>    Ellipse shape. An ellipse bounded by the rectangle x/y/w/h. Size    determines the distance beyond the ellipse that the transition    takes place.</p></div></div><div class = "indent"><span class = "variable">type </span><span class = "variable-supplement">AlphaShapeType = "LINE"</span><div class = "indent"></div><span class = "variable">x </span><span class = "variable-supplement">int = 0</span><div class = "indent"></div><span class = "variable">y </span><span class = "variable-supplement">int = 0</span><div class = "indent"></div><span class = "variable">w </span><span class = "variable-supplement">int = 100</span><div class = "indent"><div class = "doc"><p>Corresponding absolute value is x + w. Negative values point left.</p></div></div><span class = "variable">h </span><span class = "variable-supplement">int = 0</span><div class = "indent"><div class = "doc"><p>Corresponding absolute value is y + h. Negative values point up.</p></div></div><span class = "variable">size </span><span class = "variable-supplement">float = 0</span><div class = "indent"><div class = "doc"><p>The size of the transition.</p></div></div><span class = "variable">invert </span><span class = "variable-supplement">bool = False</span><div class = "indent"><div class = "doc"><p>Reverses the alpha values, changing the direction the fade takes.</p></div></div><span class = "variable">min_value </span><span class = "variable-supplement">float = 0</span><div class = "indent"></div><span class = "variable">max_value </span><span class = "variable-supplement">float = 1</span><div class = "indent"></div><span class = "variable">alpha_strategy </span><span class = "variable-supplement">AlphaStrategyType = "MIN"</span><div class = "indent"></div></div></div></div><div style = "height: 2em;"></div><h2 id = "blur">Blur</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>type</td><td>BlurType</td><td>"BOX"</td><tr></tr><td>x</td><td>float</td><td>2</td><tr></tr><td>y</td><td>float</td><td>2</td></table><div></div><div class = "indent"><span class = "variable">type </span><span class = "variable-supplement">BlurType = "BOX"</span><div class = "indent"></div><span class = "variable">x </span><span class = "variable-supplement">float = 2</span><div class = "indent"><div class = "doc"><p>Bluring along the X axis.</p></div></div><span class = "variable">y </span><span class = "variable-supplement">float = 2</span><div class = "indent"><div class = "doc"><p>Bluring along the Y axis.</p></div></div></div></div></div><div style = "height: 2em;"></div><h2 id = "border">Border</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>width</td><td>int</td><td>5</td><tr></tr><td>color</td><td></td><td>(255, 255, 255)</td></table><div><div class = "doc"><p>Add border and stylized corners.</p><p>    all -- Configuration applied to all corners. A dict with keys    matching keywords in BorderCorner constructor. all is applied    first to all corners. Individual corners can be configured through    tl, tr, bl, br. Individual configuration overrides all.</p><p>    tl -- Top left corner configuration.</p><p>    tr -- Top right corner configuration.</p><p>    bl -- Bottom left corner configuration.</p><p>    br -- Bottom right corner configuration.</p></div></div><div class = "indent"><span class = "variable">width </span><span class = "variable-supplement">int = 5</span><div class = "indent"><div class = "doc"><p>The width of the border. The image grows by width pixels in all    directions. Use a width of 0 to disable drawing a border.</p></div></div><span class = "variable">color </span><span class = "variable-supplement"> = (255, 255, 255)</span><div class = "indent"><div class = "doc"><p>Color of the border.</p></div></div></div></div></div><div style = "height: 2em;"></div><h2 id = "bordercorner">BorderCorner</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>type</td><td>BorderCornerType</td><td>"CURVE"</td><tr></tr><td>size</td><td>int</td><td></td><tr></tr><td>width</td><td>int</td><td></td><tr></tr><td>height</td><td>int</td><td></td></table><div><div class = "doc"><p>Corner configuration for borders.</p></div></div><div class = "indent"><span class = "variable">type </span><span class = "variable-supplement">BorderCornerType = "CURVE"</span><div class = "indent"><div class = "doc"><p>General shape of the corner.</p></div></div><span class = "variable">size </span><span class = "variable-supplement">int</span><div class = "indent"><div class = "doc"><p>Convenience for setting both width and height.</p></div></div><span class = "variable">width </span><span class = "variable-supplement">int</span><div class = "indent"><div class = "doc"><p>Horizontal anchor point for the corner. Uses size if not set.</p></div></div><span class = "variable">height </span><span class = "variable-supplement">int</span><div class = "indent"><div class = "doc"><p>Vertical anchor point for the corner. Uses size if not set.</p></div></div></div></div></div><div style = "height: 2em;"></div><h2 id = "crop">Crop</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>left</td><td>int</td><td>0</td><tr></tr><td>top</td><td>int</td><td>0</td><tr></tr><td>right</td><td>int</td><td>0</td><tr></tr><td>bottom</td><td>int</td><td>0</td></table><div><div class = "doc"><p>Crops the clip by removing the given number of pixels from each    edge. The clip remains in position.</p></div></div><div class = "indent"><span class = "variable">left </span><span class = "variable-supplement">int = 0</span><div class = "indent"></div><span class = "variable">top </span><span class = "variable-supplement">int = 0</span><div class = "indent"></div><span class = "variable">right </span><span class = "variable-supplement">int = 0</span><div class = "indent"></div><span class = "variable">bottom </span><span class = "variable-supplement">int = 0</span><div class = "indent"></div></div></div></div><div style = "height: 2em;"></div><h2 id = "fade">Fade</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>value</td><td>float</td><td>1</td><tr></tr><td>fade_in</td><td>time</td><td></td><tr></tr><td>fade_out</td><td>time</td><td></td><tr></tr><td>alpha_strategy</td><td>AlphaStrategyType</td><td>"MIN"</td></table><div><div class = "doc"><p>Fade the clip by applying a uniform alpha value.</p><p>    If multiple values are set only the lowest will apply.</p></div></div><div class = "indent"><span class = "variable">value </span><span class = "variable-supplement">float = 1</span><div class = "indent"><div class = "doc"><p>Alpha value as a float between 0 and 1.</p></div></div><span class = "variable">fade_in </span><span class = "variable-supplement">time</span><div class = "indent"><div class = "doc"><p>Duration of fade transition at the start of the clip.</p></div></div><span class = "variable">fade_out </span><span class = "variable-supplement">time</span><div class = "indent"><div class = "doc"><p>Duration of fade transition at the end of the clip.</p></div></div><span class = "variable">alpha_strategy </span><span class = "variable-supplement">AlphaStrategyType = "MIN"</span><div class = "indent"></div></div></div></div><div style = "height: 2em;"></div><h2 id = "pos">Pos</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>x</td><td>int</td><td></td><tr></tr><td>y</td><td>int</td><td></td><tr></tr><td>center</td><td>bool</td><td>False</td><tr></tr><td>x_offset</td><td>int</td><td>0</td><tr></tr><td>y_offset</td><td>int</td><td>0</td><tr></tr><td>horizontal</td><td>float</td><td></td><tr></tr><td>vertical</td><td>float</td><td></td><tr></tr><td>weight</td><td>float</td><td>1</td></table><div><div class = "doc"><p>Changes the position of a clip in relation to its parent.</p><p>    There are multiple variables relating to positioning along the    same axis. Relative positioning is applied first. Second absolute    positioning, which will override relative positioning. Offset is    applied last.</p></div></div><div class = "indent"><span class = "variable">x </span><span class = "variable-supplement">int</span><div class = "indent"><div class = "doc"><p>Absolute x position.</p></div></div><span class = "variable">y </span><span class = "variable-supplement">int</span><div class = "indent"><div class = "doc"><p>Absolute y position.</p></div></div><span class = "variable">center </span><span class = "variable-supplement">bool = False</span><div class = "indent"><div class = "doc"><p>For use with x and y variables.</p><p>        When True the center of the clip is aligned with x and y        rather than the upper left corner.</p></div></div><span class = "variable">x_offset </span><span class = "variable-supplement">int = 0</span><div class = "indent"><div class = "doc"><p>Offset for x position.</p></div></div><span class = "variable">y_offset </span><span class = "variable-supplement">int = 0</span><div class = "indent"><div class = "doc"><p>Offset for y position.</p></div></div><span class = "variable">horizontal </span><span class = "variable-supplement">float</span><div class = "indent"><div class = "doc"><p>Relative horizontal position.</p><p>        0 aligns the clip to the left of the parent, 1 aligns it to        the right.</p></div></div><span class = "variable">vertical </span><span class = "variable-supplement">float</span><div class = "indent"><div class = "doc"><p>Relative vertical position.</p><p>        0 aligns the clip to the top of the parent, 1 aligns it to the        bottom.</p></div></div><span class = "variable">weight </span><span class = "variable-supplement">float = 1</span><div class = "indent"><div class = "doc"><p>For use with horizontal and vertical variables.</p><p>        How much of the clip is visible in the parent when horizontal        and vertical are at 0 or 1. Weight 1 means that the clip is        contained fully within the parent. Weight 0 means that the        clip is right outside the parent.</p></div></div></div></div></div><div style = "height: 2em;"></div><h2 id = "resize">Resize</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>width</td><td>int</td><td></td><tr></tr><td>height</td><td>int</td><td></td><tr></tr><td>strategy</td><td>ResizeType</td><td>"FIT"</td></table><div><div class = "doc"><p>Resizes the clip. The clip is repositioned so that the center of    the clip is the same before and after the resize. Either width of    height may be omitted.</p></div></div><div class = "indent"><span class = "variable">width </span><span class = "variable-supplement">int</span><div class = "indent"><div class = "doc"><p>New width of the clip.</p></div></div><span class = "variable">height </span><span class = "variable-supplement">int</span><div class = "indent"><div class = "doc"><p>New height of the clip.</p></div></div><span class = "variable">strategy </span><span class = "variable-supplement">ResizeType = "FIT"</span><div class = "indent"><div class = "doc"><p>How to resize the image.</p><p>        COVER Maintains aspect ratio. Fit the clip into the dimensions        so that the entire surface/axis is covered by the clip. May        leave parts of the clip outside the given bounds.</p><p>        CONTAIN Maintains aspect ratio. Fit the clip into the        dimensions/axis so that no part of the clip is outside of it.        The resulting clip may be smaller than specified along one of        the axes.</p><p>        STRETCH Forcably fits the clip into the given dimensions,        skewing the aspect ratio as necessary. The resulting clip will        cover the entire given surface/axis.</p><p>        FIT Same as cover but truncates the image to completely fit        inside the given dimensions.</p></div></div></div></div></div><div style = "height: 2em;"></div><h2 id = "rotate">Rotate</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>angle</td><td>float</td><td>0</td></table><div><div class = "doc"><p>Rotate clockwise by the given angle amount of degrees. The clip is    rotated around it's center point.</p></div></div><div class = "indent"><span class = "variable">angle </span><span class = "variable-supplement">float = 0</span><div class = "indent"><div class = "doc"><p>Angle in degrees. Rotates clockwise.</p></div></div></div></div></div><div style = "height: 2em;"></div></div><h1 id = "draw">Draw</h1><div class = "indent"><h2 id = "about">About</h2><div class = "indent"><div><p>Draw is an effect that provides functionality to render shapes and text. Instructions are added to the Draw effect and are executed in sequence. </p><pre class = "code">draw = (Draw()
+        .config(color="gray", fill="white", pen_width=5)
+        .rectangle(x=50, y=100, width=400, height=100)
+        .config(font_name="Arial", fill="green", pen_width=0)
+        .text(text="Sample text", x=250, y=150, width=300, anchor="mm"))
+
+proj = Project(width=500, height=300).add(draw)
+
+proj.get_frame(0).show()</pre></div></div><div style = "height: 2em;"></div><h2 id = "config">config</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>color</td><td></td><td></td><tr></tr><td>fill</td><td></td><td></td><tr></tr><td>pen_width</td><td>int</td><td>0</td><tr></tr><td>font_name</td><td>str</td><td></td><tr></tr><td>font_size</td><td>int</td><td></td><tr></tr><td>font_variant</td><td>str</td><td></td></table><div><div class = "doc"><p>Configure the colors and font to use for subsequent instructions.    The variables set through a config instruction remains until    another config instruction updates them.</p></div></div><div class = "indent"><span class = "variable">color </span><span class = "variable-supplement"></span><div class = "indent"><div class = "doc"><p>Color to use for tracing/border. pen_width must be greater than 0    for this to be visible.</p></div></div><span class = "variable">fill </span><span class = "variable-supplement"></span><div class = "indent"><div class = "doc"><p>Color to use for the the drawing. This applies to the body of    shapes and the color of text.</p></div></div><span class = "variable">pen_width </span><span class = "variable-supplement">int = 0</span><div class = "indent"><div class = "doc"><p>With of the tracing/border around drawn objects. Set to 0 to disable.</p></div></div><span class = "variable">font_name </span><span class = "variable-supplement">str</span><div class = "indent"></div><span class = "variable">font_size </span><span class = "variable-supplement">int</span><div class = "indent"></div><span class = "variable">font_variant </span><span class = "variable-supplement">str</span><div class = "indent"></div></div></div></div><div style = "height: 2em;"></div><h2 id = "ellipse">ellipse</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>x</td><td>int</td><td>0</td><tr></tr><td>y</td><td>int</td><td>0</td><tr></tr><td>width</td><td>int</td><td></td><tr></tr><td>height</td><td>int</td><td></td><tr></tr><td>radius</td><td>float</td><td></td><tr></tr><td>center</td><td>bool</td><td></td></table><div></div><div class = "indent"><span class = "variable">x </span><span class = "variable-supplement">int = 0</span><div class = "indent"></div><span class = "variable">y </span><span class = "variable-supplement">int = 0</span><div class = "indent"></div><span class = "variable">width </span><span class = "variable-supplement">int</span><div class = "indent"></div><span class = "variable">height </span><span class = "variable-supplement">int</span><div class = "indent"></div><span class = "variable">radius </span><span class = "variable-supplement">float</span><div class = "indent"></div><span class = "variable">center </span><span class = "variable-supplement">bool</span><div class = "indent"><div class = "doc"><p>Use x and y as the center of the ellipse rather than the upper left corner.</p></div></div></div></div></div><div style = "height: 2em;"></div><h2 id = "line">line</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>path</td><td></td><td></td><tr></tr><td>close</td><td>bool</td><td>False</td></table><div><div class = "doc"><p>Draw lines or a polygon.</p></div></div><div class = "indent"><span class = "variable">path </span><span class = "variable-supplement"></span><div class = "indent"><div class = "doc"><p>A list of (x, y) pairs.</p></div></div><span class = "variable">close </span><span class = "variable-supplement">bool = False</span><div class = "indent"><div class = "doc"><p>When true an additional line from the last point to the first point    will be drawn. This turns the lines into a polygon which can be    filled.</p></div></div></div></div></div><div style = "height: 2em;"></div><h2 id = "rectangle">rectangle</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>x</td><td>int</td><td>0</td><tr></tr><td>y</td><td>int</td><td>0</td><tr></tr><td>width</td><td>int</td><td></td><tr></tr><td>height</td><td>int</td><td></td><tr></tr><td>center</td><td>bool</td><td></td></table><div></div><div class = "indent"><span class = "variable">x </span><span class = "variable-supplement">int = 0</span><div class = "indent"></div><span class = "variable">y </span><span class = "variable-supplement">int = 0</span><div class = "indent"></div><span class = "variable">width </span><span class = "variable-supplement">int</span><div class = "indent"></div><span class = "variable">height </span><span class = "variable-supplement">int</span><div class = "indent"></div><span class = "variable">center </span><span class = "variable-supplement">bool</span><div class = "indent"><div class = "doc"><p>Use x and y as the center of the rectangle rather than the upper left corner.</p></div></div></div></div></div><div style = "height: 2em;"></div><h2 id = "text">text</h2><div class = "indent"><div><table class = "variable-table"><tr><th>Name</th><th>Type</th><th>Default</th></tr><tr></tr><td>text</td><td>str</td><td></td><tr></tr><td>x</td><td>int</td><td>0</td><tr></tr><td>y</td><td>int</td><td>0</td><tr></tr><td>font_name</td><td>str</td><td></td><tr></tr><td>size</td><td>int</td><td></td><tr></tr><td>variant</td><td>str</td><td></td><tr></tr><td>width</td><td>int</td><td></td><tr></tr><td>anchor</td><td>str</td><td></td></table><div></div><div class = "indent"><span class = "variable">text </span><span class = "variable-supplement">str</span><div class = "indent"><div class = "doc"><p>Text to draw. If the text contains linebreak characters multiple        lines are drawn.</p></div></div><span class = "variable">x </span><span class = "variable-supplement">int = 0</span><div class = "indent"><div class = "doc"><p>Left coordinate to place text.</p></div></div><span class = "variable">y </span><span class = "variable-supplement">int = 0</span><div class = "indent"><div class = "doc"><p>Top coordinate to place text.</p></div></div><span class = "variable">font_name </span><span class = "variable-supplement">str</span><div class = "indent"><div class = "doc"><p>Name of the font.</p></div></div><span class = "variable">size </span><span class = "variable-supplement">int</span><div class = "indent"><div class = "doc"><p>Size of the font.</p></div></div><span class = "variable">variant </span><span class = "variable-supplement">str</span><div class = "indent"><div class = "doc"><p>Variant of the font.</p></div></div><span class = "variable">width </span><span class = "variable-supplement">int</span><div class = "indent"><div class = "doc"><p>The width at which point text wrapping occurs. If set to None no    wrapping takes place. If parts of the text can't fit it will be    truncated. If size (or font_size from config, if size is not set)    is None then the font size is adapted so that text fits into    width.</p></div></div><span class = "variable">anchor </span><span class = "variable-supplement">str</span><div class = "indent"><div class = "doc"><p>Where to place the text in relation to x and y coordinates. By    default top left is used.</p><p>        Horizontal            l - left            m - middle            r - right            s - baseline (vertical text only)</p><p>        Vertical            a - ascender / top (horizontal text only)            t - top (single-line text only)            m - middle            s - baseline (horizontal text only)            b - bottom (single-line text only)            d - descender / bottom (horizontal text only)</p><p>        https://pillow.readthedocs.io/en/stable/handbook/text-anchors.html</p></div></div></div></div></div><div style = "height: 2em;"></div></div></div></div></body></html>

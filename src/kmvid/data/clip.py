@@ -36,7 +36,7 @@ def clip(path_or_color, **args):
     if (isinstance(path_or_color, str) and
         resource.is_recognized_format(path_or_color)):
         clip_kws, other_kws = Clip.split_kwargs(args)
-        return Clip(resource.from_file(path, **other_kws),
+        return Clip(resource.from_file(path_or_color, **other_kws),
                     **clip_kws)
     else:
         return color(color=path_or_color, **args)

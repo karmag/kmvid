@@ -163,9 +163,19 @@ class Instruction(common.Node, variable.VariableHold):
 
 @variable.holder
 class Config(Instruction):
-    color = variable.VariableConfig()
-    fill = variable.VariableConfig()
-    pen_width = variable.VariableConfig(int, default=0)
+    """Configure the colors and font to use for subsequent instructions.
+    The variables set through a config instruction remains until
+    another config instruction changes them.
+
+    """
+
+    color = variable.VariableConfig(doc="""Color to use for tracing/border. pen_width must be greater than 0
+    for this to be visible.""")
+    fill = variable.VariableConfig(doc="""Color to use for the the drawing. This applies to the body of
+    shapes and the color of text.""")
+    pen_width = variable.VariableConfig(
+        int, default=0,
+        doc="""With of the tracing/border around drawn objects. Set to 0 to disable.""")
 
     font_name = variable.VariableConfig(str)
     font_size = variable.VariableConfig(int)
@@ -212,7 +222,8 @@ class Rectangle(Instruction):
     y = variable.VariableConfig(int, 0)
     width = variable.VariableConfig(int)
     height = variable.VariableConfig(int)
-    center = variable.VariableConfig(bool)
+    center = variable.VariableConfig(
+        bool, doc="Use x and y as the center of the rectangle rather than the upper left corner.")
 
     def __init__(self, *args, **kwargs):
         Instruction.__init__(self, args=args, kwargs=kwargs)
@@ -237,7 +248,8 @@ class Ellipse(Instruction):
     width = variable.VariableConfig(int)
     height = variable.VariableConfig(int)
     radius = variable.VariableConfig(float)
-    center = variable.VariableConfig(bool)
+    center = variable.VariableConfig(
+        bool, doc="Use x and y as the center of the ellipse rather than the upper left corner.")
 
     def __init__(self, *args, **kwargs):
         Instruction.__init__(self, args=args, kwargs=kwargs)
@@ -326,7 +338,7 @@ class Text(Instruction):
 @variable.holder
 class Line(Instruction):
     """Draw lines or a polygon."""
-    path = variable.VariableConfig(doc="A list of (x, y) pairs indicating.")
+    path = variable.VariableConfig(doc="A list of (x, y) pairs.")
     close = variable.VariableConfig(
         bool, False, doc="""When true an additional line from the last point to the first point
     will be drawn. This turns the lines into a polygon which can be
