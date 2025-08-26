@@ -4,6 +4,7 @@ import kmvid.data.state as state
 import scipy.interpolate as interpolate
 
 import enum
+import re
 import sys
 
 #--------------------------------------------------
@@ -134,9 +135,49 @@ class VariableHold(common.Simpleable):
 
 __VARIABLE_CONFIG_INDEX_COUNTER__ = 0
 
+def _parse_time_value(value):
+    """Parses the given value as a time value.
+
+    int and float values are returned as is.
+
+    string values are parsed into a number. Multiple values be given
+    in the string in which case the sum of those numbers are returned.
+    Numbers are allowed suffixes. Spaces, or suffixes, can be used to
+    separate numbers.
+
+        ms - milliseconds
+        s  - seconds (default if no suffix)
+        m  - minutes
+        h  - hours
+
+    Examples: "1h 4m 3s 451ms"
+              "1m1m1m1m"       # = 4 minutes
+              "600s"           # = 10 minutes
+              " -55m 1h "      # = 5 minutes
+              "0.5m"           # = 30 seconds
+    """
+    if value is None or isinstance(value, (float, int)):
+        return value
+
+    time_sum = 0
+    last = 0
+    factor = {"ms": 0.001, "s": 1, "m": 60, "h": 3600}
+    for part in re.split("(-[0-9.]+|ms|[ smh])", value.lower()):
+        part = part.strip()
+        if part:
+            try:
+                part_value = float(part)
+                time_sum += last
+                last = part_value
+            except ValueError:
+                time_sum += last * factor[part]
+                last = 0
+    time_sum += last
+    return time_sum
+
 class VariableConfig(common.Simpleable):
     def __init__(self,
-                 type=None,
+                 vartype=None,
                  default=None,
                  doc=None,
                  value_transform_fn=None):
@@ -144,20 +185,23 @@ class VariableConfig(common.Simpleable):
         __VARIABLE_CONFIG_INDEX_COUNTER__ += 1
         self.index = __VARIABLE_CONFIG_INDEX_COUNTER__
         self.name = None
-        self.type = type
+        self.type = vartype
         self.default = default
         self.doc = doc
 
         force = None
-        if type and issubclass(type, enum.Enum):
+        if type(vartype) is enum.EnumType:
             def force(value):
-                return value if value is None else common.to_enum(value, type)
+                return value if value is None else common.to_enum(value, vartype)
 
-        elif type in (int, float, str):
+        elif vartype in (int, float, str):
             def force(value):
                 if value is None:
                     return value
-                return type(value)
+                return vartype(value)
+
+        elif vartype == "time":
+            force = _parse_time_value
 
         self.value_transform_fn = value_transform_fn or force
 
@@ -290,18 +334,43 @@ def _to_variable_values(value, value_transform_fn=None):
         return [StaticValue(value)]
 
 def make_val(value, *args):
+    """Makes a value.
+
+    value -- The object to use as value. If this is a list or tuple
+    it's interpreted as an expression and passed to
+    kmvid.data.expression.parse for evaluation.
+
+    args -- Interpreted based on type. int and float are taken as
+    start-time. TimeValueType, str and None are taken as the time
+    value type, None is mapped to TimeValueType.NONE.
+
+    """
     kwargs = {}
 
     for x in args:
-        if isinstance(x, (str, TimeValueType)):
-            kwargs['time_type'] = common.to_enum(x, TimeValueType)
+        if isinstance(x, TimeValueType):
+            kwargs['time_type'] = x
+
+        elif x is None:
+            kwargs['time_type'] = TimeValueType.NONE
+
+        elif isinstance(x, str):
+            try:
+                kwargs['time_type'] = common.to_enum(x, TimeValueType)
+            except ValueError:
+                kwargs['time'] = _parse_time_value(x)
 
         elif isinstance(x, (int, float)):
             kwargs['time'] = x
 
+        else:
+            raise ValueError("Unprocessable value argument: %s of type %s" % (str(x), type(x).__name__))
+
     varval = None
     if isinstance(value, expression.Expression):
         varval = ExpressionValue(value, **kwargs)
+    elif isinstance(value, (list, tuple)):
+        varval = ExpressionValue(expression.parse(value), **kwargs)
     else:
         varval = StaticValue(value, **kwargs)
 

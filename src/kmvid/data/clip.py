@@ -51,9 +51,9 @@ class Clip(common.Node, variable.VariableHold):
     """
 
     start_time = variable.VariableConfig(
-        float, 0, doc="""How far into the parent clip this clip starts.""")
+        "time", 0, doc="""How far into the parent clip this clip starts.""")
     duration = variable.VariableConfig(
-        float, doc="""Duration of the clip.
+        "time", doc="""Duration of the clip.
 
         If the clip is using a finite resource (such as a video) the
         duration will not be longer than the resource allows.""")

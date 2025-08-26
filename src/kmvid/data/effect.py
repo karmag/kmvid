@@ -265,9 +265,9 @@ class Fade(Effect):
     value = variable.VariableConfig(
         float, 1, doc="""Alpha value as a float between 0 and 1.""")
     fade_in = variable.VariableConfig(
-        float, doc="""Duration of fade transition at the start of the clip.""")
+        "time", doc="""Duration of fade transition at the start of the clip.""")
     fade_out = variable.VariableConfig(
-        float, doc="""Duration of fade transition at the end of the clip.""")
+        "time", doc="""Duration of fade transition at the end of the clip.""")
     alpha_strategy = variable.VariableConfig(
         common.AlphaStrategyType, common.AlphaStrategyType.MIN)
 

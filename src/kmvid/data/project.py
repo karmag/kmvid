@@ -27,7 +27,7 @@ class Project(common.Node, variable.VariableHold):
     filename = variable.VariableConfig(
         str, "output.mp4", doc="""Path to use when rendering video.""")
     duration = variable.VariableConfig(
-        float, None,
+        "time", None,
         doc="""Target duration of the rendered video.
 
         If not set duration is derived from clips added to the

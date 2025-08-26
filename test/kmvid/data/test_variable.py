@@ -11,30 +11,15 @@ class EnumTest(enum.Enum):
     ABC = 1
     DEF = 2
 
-@variable.holder
-class ClassTest(variable.VariableHold):
-    x = variable.VariableConfig(int)
-    enumerati = variable.VariableConfig(EnumTest, EnumTest.ABC)
-    def __init__(self, *args, **kwargs):
-        variable.VariableHold.__init__(self, args=args, kwargs=kwargs)
-
-def make_variable(name, value):
-    cfg = variable.VariableConfig(type=int)
+def quick_variable(value):
+    cfg = variable.VariableConfig(vartype=int)
     var = variable.Variable(cfg)
-    var.name = name
     var.set_value(value)
     return var
 
 class TestVariable(testbase.Testbase):
-    def test_setting_variable(self):
-        expected = 5
-
-        for var in [make_variable("static value", expected),
-                    make_variable("expression", expression.Value(expected))]:
-            self.assertEqual(expected, var.get_value())
-
     def test_multivalue_variable(self):
-        var = make_variable("x", {0: 10, 1: 20, 2: 100})
+        var = quick_variable({0: 10, 1: 20, 2: 100})
 
         self.assertEqual(10, var.get_value())
 
@@ -47,12 +32,12 @@ class TestVariable(testbase.Testbase):
 
     def test_override_old_value(self):
         # single
-        var = make_variable("x", 5)
+        var = quick_variable(5)
         var.add_value(10)
         self.assertEqual(10, var.get_value())
 
         # multi
-        var = make_variable("x", {0: 10, 1: 20})
+        var = quick_variable({0: 10, 1: 20})
         var.add_value(30)
         self.assertEqual(2, len(var.get_all_variable_values()))
 
@@ -71,7 +56,7 @@ class TestVariable(testbase.Testbase):
             self.assertEqual(100, var.get_value())
 
     def test_time_value_type(self):
-        var = make_variable("x", {0: 0, 1: 10, 2: 100})
+        var = quick_variable({0: 0, 1: 10, 2: 100})
 
         # linear (default)
         with state.State():
@@ -98,10 +83,58 @@ class TestVariable(testbase.Testbase):
                 state.set_time(time)
                 self.assertEqual(expected, var.get_value())
 
-    def test_enum_values(self):
-        self.assertEqual(EnumTest.DEF, ClassTest(enumerati=EnumTest.DEF).enumerati)
-        self.assertEqual(EnumTest.DEF, ClassTest(enumerati="def").enumerati)
-        self.assertEqual(EnumTest.DEF, ClassTest(enumerati=2).enumerati)
+    def test_setting_values(self):
+        def getval(type, value):
+            cfg = variable.VariableConfig(vartype=type)
+            var = variable.Variable(cfg)
+            var.set_value(value)
+            return var.get_value()
+
+        test_data = [
+            ((int, 5), 5),
+            ((int, 7.5), 7),
+            ((int, "6"), 6),
+            ((int, None), None),
+            ((float, 1), 1),
+            ((float, 2.5), 2.5),
+            ((float, "3"), 3),
+            ((float, None), None),
+            ((str, "hello"), "hello"),
+            ((str, 123), "123"),
+            ((str, None), None),
+            (("time", 10), 10),
+            (("time", 15.2), 15.2),
+            (("time", "11ms"), 0.011),
+            (("time", "12s"), 12),
+            (("time", "1m"), 60),
+            (("time", "1h"), 60*60),
+            (("time", " 2 4m 1.5 500ms"), 2 + 4*60 + 1.5 + 0.5),
+            (("time", "1h3s"), 60*60+3),
+            (("time", "4-3m"), 4-3*60),
+            ((EnumTest, EnumTest.DEF), EnumTest.DEF),
+            ((EnumTest, "def"), EnumTest.DEF),
+            ((EnumTest, 2), EnumTest.DEF),
+        ]
+
+        for args, expected in test_data:
+            with self.subTest(args=args, expected=expected):
+                self.assertEqual(getval(*args), expected)
+
+    def test_make_val(self):
+        var = variable.make_val("abc", 5, "linear")
+        self.assertEqual(var.get_value(), "abc")
+        self.assertEqual(var.start_time, 5)
+        self.assertEqual(var.time_type, variable.TimeValueType.LINEAR)
+
+        var = variable.make_val(45, None, 10)
+        self.assertEqual(var.get_value(), 45)
+        self.assertEqual(var.start_time, 10)
+        self.assertEqual(var.time_type, variable.TimeValueType.NONE)
+
+        var = variable.make_val(('+', 'time', 22), "none", 5, "linear", 10)
+        self.assertEqual(var.get_value(), 22)
+        self.assertEqual(var.start_time, 10)
+        self.assertEqual(var.time_type, variable.TimeValueType.LINEAR)
 
     def test_expression_values(self):
         with state.State():
