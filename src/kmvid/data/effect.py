@@ -300,17 +300,16 @@ class Fade(Effect):
 
 @variable.holder
 class Crop(Effect):
+    """Crops the clip by removing the given number of pixels from each
+    edge. The clip remains in position.
+
+    """
     left = variable.VariableConfig(int, 0)
     top = variable.VariableConfig(int, 0)
     right = variable.VariableConfig(int, 0)
     bottom = variable.VariableConfig(int, 0)
 
     def __init__(self, **kwargs):
-        """Crops the clip by removing the given number of pixels from each
-        edge. The clip is repositioned so that the center is the same
-        before and after the crop.
-
-        """
         Effect.__init__(self, kwargs=kwargs)
 
     def apply(self, render):
@@ -322,8 +321,8 @@ class Crop(Effect):
         bottom = self.bottom
 
         render.image = render.image.crop((left, top, w - right, h - bottom))
-        render.x -= (left + right) / 2
-        render.y -= (top + bottom) / 2
+        render.x -= left / 2
+        render.y -= top / 2
 
 @variable.holder
 class Draw(Effect):
