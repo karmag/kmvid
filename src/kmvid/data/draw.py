@@ -263,57 +263,41 @@ class Ellipse(Instruction):
 
 @variable.holder
 class Text(Instruction):
-    text = variable.VariableConfig(str, "no text")
-    x = variable.VariableConfig(int, 0)
-    y = variable.VariableConfig(int, 0)
-    font_name = variable.VariableConfig(str)
-    size = variable.VariableConfig(int)
-    variant = variable.VariableConfig(str)
-    width = variable.VariableConfig(int)
-    anchor = variable.VariableConfig(str)
+    text = variable.VariableConfig(
+        str, doc="""Text to draw. If the text contains linebreak characters multiple
+        lines are drawn.""")
+    x = variable.VariableConfig(int, 0, doc="Left coordinate to place text.")
+    y = variable.VariableConfig(int, 0, doc="Top coordinate to place text.")
+    font_name = variable.VariableConfig(str, doc="Name of the font.")
+    size = variable.VariableConfig(int, doc="Size of the font.")
+    variant = variable.VariableConfig(str, doc="Variant of the font.")
+    width = variable.VariableConfig(
+        int, doc="""The width at which point text wrapping occurs. If set to None no
+    wrapping takes place. If parts of the text can't fit it will be
+    truncated. If size (or font_size from config, if size is not set)
+    is None then the font size is adapted so that text fits into
+    width.""")
+    anchor = variable.VariableConfig(
+        str, doc="""Where to place the text in relation to x and y coordinates. By
+    default top left is used.
+
+        Horizontal
+            l - left
+            m - middle
+            r - right
+            s - baseline (vertical text only)
+
+        Vertical
+            a - ascender / top (horizontal text only)
+            t - top (single-line text only)
+            m - middle
+            s - baseline (horizontal text only)
+            b - bottom (single-line text only)
+            d - descender / bottom (horizontal text only)
+
+        https://pillow.readthedocs.io/en/stable/handbook/text-anchors.html""")
 
     def __init__(self, *args, **kwargs):
-        """Draw text.
-
-        text -- Text to draw. If the text contains linebreak
-        characters multiple lines are drawn.
-
-        x -- Left coordinate to place text.
-
-        y -- Top coordinate to place text.
-
-        font_name -- Name of the font.
-
-        size -- Size of the font.
-
-        variant -- Variant of the font.
-
-        width -- The width at which point text wrapping occurs. If set
-        to None no wrapping takes place. If parts of the text can't
-        fit it will be truncated. If size (or font_size from config,
-        if size is not set) is None then the font size is adapted so
-        that text fits into width.
-
-        anchor -- Where to place the text in relation to x and y
-        coordinates. By default top left is used.
-
-            Horizontal
-                l - left
-                m - middle
-                r - right
-                s - baseline (vertical text only)
-
-            Vertical
-                a - ascender / top (horizontal text only)
-                t - top (single-line text only)
-                m - middle
-                s - baseline (horizontal text only)
-                b - bottom (single-line text only)
-                d - descender / bottom (horizontal text only)
-
-            https://pillow.readthedocs.io/en/stable/handbook/text-anchors.html
-
-        """
         Instruction.__init__(self, args=args, kwargs=kwargs)
 
     def apply(self, data):
@@ -341,19 +325,14 @@ class Text(Instruction):
 
 @variable.holder
 class Line(Instruction):
-    path = variable.VariableConfig()
-    close = variable.VariableConfig(bool, False)
+    """Draw lines or a polygon."""
+    path = variable.VariableConfig(doc="A list of (x, y) pairs indicating.")
+    close = variable.VariableConfig(
+        bool, False, doc="""When true an additional line from the last point to the first point
+    will be drawn. This turns the lines into a polygon which can be
+    filled.""")
 
     def __init__(self, *args, **kwargs):
-        """Draw lines or a polygon.
-
-        path -- A list of (x, y) pairs indicating.
-
-        close -- When true an additional line from the last point to
-        the first point will be drawn. This turns the lines into a
-        polygon which can be filled.
-
-        """
         Instruction.__init__(self, args=args, kwargs=kwargs)
 
     def apply(self, data):

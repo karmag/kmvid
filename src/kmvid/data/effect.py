@@ -163,39 +163,34 @@ class ResizeType(enum.Enum):
 
 @variable.holder
 class Resize(Effect):
-    width = variable.VariableConfig(int)
-    height = variable.VariableConfig(int)
-    strategy = variable.VariableConfig(ResizeType, ResizeType.FIT)
+    """Resizes the clip. The clip is repositioned so that the center of
+    the clip is the same before and after the resize. Either width of
+    height may be omitted.
+
+    """
+    width = variable.VariableConfig(int, doc="New width of the clip.")
+    height = variable.VariableConfig(int, doc="New height of the clip.")
+    strategy = variable.VariableConfig(
+        ResizeType, ResizeType.FIT,
+        doc="""How to resize the image.
+
+        COVER Maintains aspect ratio. Fit the clip into the dimensions
+        so that the entire surface/axis is covered by the clip. May
+        leave parts of the clip outside the given bounds.
+
+        CONTAIN Maintains aspect ratio. Fit the clip into the
+        dimensions/axis so that no part of the clip is outside of it.
+        The resulting clip may be smaller than specified along one of
+        the axes.
+
+        STRETCH Forcably fits the clip into the given dimensions,
+        skewing the aspect ratio as necessary. The resulting clip will
+        cover the entire given surface/axis.
+
+        FIT Same as cover but truncates the image to completely fit
+        inside the given dimensions.""")
 
     def __init__(self, *args, **kwargs):
-        """Resizes the clip. The clip is repositioned so that the center of
-        the clip is the same before and after the resize. Either width
-        of height may be omitted.
-
-        width -- New width of the clip.
-
-        height -- New height of the clip.
-
-        strategy -- How to resize the image.
-
-            COVER Maintains aspect ratio. Fit the clip into the
-            dimensions so that the entire surface/axis is covered by
-            the clip. May leave parts of the clip outside the given
-            bounds.
-
-            CONTAIN Maintains aspect ratio. Fit the clip into the
-            dimensions/axis so that no part of the clip is outside of
-            it. The resulting clip may be smaller than specified along
-            one of the axes.
-
-            STRETCH Forcably fits the clip into the given dimensions,
-            skewing the aspect ratio as necessary. The resulting clip
-            will cover the entire given surface/axis.
-
-            FIT Same as cover but truncates the image to completely
-            fit inside the given dimensions.
-
-        """
         Effect.__init__(self, args=args, kwargs=kwargs)
 
     def apply(self, render):
@@ -233,13 +228,14 @@ class Resize(Effect):
 
 @variable.holder
 class Rotate(Effect):
-    angle = variable.VariableConfig(float, 0)
+    """Rotate clockwise by the given angle amount of degrees. The clip is
+    rotated around it's center point.
+
+    """
+    angle = variable.VariableConfig(
+        float, 0, doc="Angle in degrees. Rotates clockwise.")
 
     def __init__(self, *args, **kwargs):
-        """Rotate clockwise by the given angle amount of degrees. The clip is
-        rotated around it's center point.
-
-        """
         Effect.__init__(self, args=args, kwargs=kwargs)
 
     def apply(self, render):
@@ -371,33 +367,30 @@ class Draw(Effect):
 
 @variable.holder
 class Border(Effect):
-    width = variable.VariableConfig(int, 5)
-    color = variable.VariableConfig(default=(255, 255, 255))
+    """Add border and stylized corners.
+
+    all -- Configuration applied to all corners. A dict with keys
+    matching keywords in BorderCorner constructor. all is applied
+    first to all corners. Individual corners can be configured through
+    tl, tr, bl, br. Individual configuration overrides all.
+
+    tl -- Top left corner configuration.
+
+    tr -- Top right corner configuration.
+
+    bl -- Bottom left corner configuration.
+
+    br -- Bottom right corner configuration.
+
+    """
+
+    width = variable.VariableConfig(
+        int, 5, doc="""The width of the border. The image grows by width pixels in all
+    directions. Use a width of 0 to disable drawing a border.""")
+    color = variable.VariableConfig(
+        default=(255, 255, 255), doc="""Color of the border.""")
 
     def __init__(self, all=None, tl=None, tr=None, bl=None, br=None, **kwargs):
-        """Add border and stylized corners.
-
-        width -- The width of the border. The image grows by width
-        pixels in all directions. Use a width of 0 to disable drawing
-        a border.
-
-        color -- Color of the border.
-
-        all -- Configuration applied to all corners. A dict with keys
-        matching keywords in BorderCorner constructor. all is applied
-        first to all corners. Individual corners can be configured
-        through tl, tr, bl, br. Individual configuration overrides
-        all.
-
-        tl -- Top left corner configuration.
-
-        tr -- Top right corner configuration.
-
-        bl -- Bottom left corner configuration.
-
-        br -- Bottom right corner configuration.
-
-        """
         Effect.__init__(self, kwargs=kwargs)
 
         self.tl = BorderCorner()
@@ -550,25 +543,18 @@ class BorderCornerType(enum.Enum):
 
 @variable.holder
 class BorderCorner(common.Node, variable.VariableHold):
-    type = variable.VariableConfig(BorderCornerType, BorderCornerType.CURVE)
-    size = variable.VariableConfig(int)
-    width = variable.VariableConfig(int)
-    height = variable.VariableConfig(int)
+    """Corner configuration for borders."""
+    type = variable.VariableConfig(
+        BorderCornerType, BorderCornerType.CURVE,
+        doc="""General shape of the corner.""")
+    size = variable.VariableConfig(
+        int, doc="""Convenience for setting both width and height.""")
+    width = variable.VariableConfig(
+        int, doc="""Horizontal anchor point for the corner. Uses size if not set.""")
+    height = variable.VariableConfig(
+        int, doc="""Vertical anchor point for the corner. Uses size if not set.""")
 
     def __init__(self, **kwargs):
-        """Corner configuration for borders.
-
-        type -- General shape of the corner.
-
-        size -- Convenience for setting both width and height.
-
-        width -- Horizontal anchor point for the corner. Uses size if
-        not set.
-
-        height -- Vertical anchor point for the corner. Uses size if
-        not set.
-
-        """
         common.Node.__init__(self)
         variable.VariableHold.__init__(self, kwargs=kwargs)
 
